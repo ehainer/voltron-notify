@@ -4,31 +4,23 @@ describe Voltron::Notify, type: :module do
 
 	let(:user) { FactoryGirl.build(:user) }
 
-	before(:all) do
-		Voltron.config.debug = false
-		Voltron.config.base_url = "http://localhost:3000"
-		Voltron.config.notify.sms_account_sid = "AC29e5a3de3d7ec13567c701d8807cd55b"
-		Voltron.config.notify.sms_auth_token = "e3f2ea4cce981294ddb799313308e80d"
-		Voltron.config.notify.sms_from = "+19707374178"
-	end
-
 	it "has a version number" do
 		expect(Voltron::Notify::VERSION).not_to be nil
 	end
 
 	context "Email Notifications" do
 
-		it "should send an email notification when associated model saved" do
+		it "should enqueue a notification when associated model saved" do
+			Voltron.config.notify.use_queue = true
 			user.notifications.build { |n| n.email "Test" }
 
 			expect { user.save }.to have_enqueued_job.on_queue("mailers")
 
 			expect(user.notifications.count).to eq(1)
-
-			expect(user.notifications.last.to_email).to eq user.email
 		end
 
-		it "should send an email with one or more attached files when saved" do
+		it "should enqueue an email with one or more attached files when saved" do
+			Voltron.config.notify.use_queue = true
 			user.notifications.build do |n|
 				n.email "Test With Attachments" do
 					attach "1.jpg"
@@ -41,8 +33,28 @@ describe Voltron::Notify, type: :module do
 			last_job_args = ActiveJob::Base.queue_adapter.enqueued_jobs.last[:args]
 
 			expect(last_job_args.last.keys).to eq(["1.jpg", "2.jpg", "_aj_symbol_keys"])
+		end
 
-			#puts ActiveJob::Base.queue_adapter.enqueued_jobs.last[:args].last.keys
+		it "should be able to enqueue using a defined mailer, method, and arguments" do
+			Voltron.config.notify.use_queue = true
+			user.notifications.build do |n|
+				n.email "Test" do
+					mailer ApplicationMailer
+					method :test_mail
+					arguments "custom@example.com", "Test Custom", "Custom Body"
+				end
+			end
+
+			expect { user.save }.to have_enqueued_job.on_queue("mailers")
+
+			expect(ActiveJob::Base.queue_adapter.enqueued_jobs.last[:args]).to eq(["ApplicationMailer", "test_mail", "deliver_now", "custom@example.com", "Test Custom", "Custom Body"])
+		end
+
+		it "should change the number of actionmailer deliveries by one if use_queue is false" do
+			expect(Voltron.config.notify.use_queue).to eq(false)
+
+			user.notifications.build { |n| n.email "Test" }
+			expect { user.save }.to change(ActionMailer::Base.deliveries, :count).by(1)
 		end
 
 		it "should fail to save if notification email subject is blank" do
@@ -64,11 +76,18 @@ describe Voltron::Notify, type: :module do
 			expect(user.errors.full_messages).to include "Notifications email recipient cannot be blank"
 		end
 
-		it "should have a non-empty request after delivering email" do
+		it "should have a non-empty request email hash after delivering" do
 			user.notifications.build { |n| n.email "Test" }
 			user.save
 
-			expect(user.notifications.last.email_instance.request.length).to eq(1)
+			expect(user.notifications.last.email_notifications.last.request).to_not be_blank
+		end
+
+		it "should have a non-empty response email hash after delivering" do
+			user.notifications.build { |n| n.email "Test" }
+			user.save
+
+			expect(user.notifications.last.email_notifications.last.response).to_not be_blank
 		end
 
 	end
@@ -80,13 +99,11 @@ describe Voltron::Notify, type: :module do
 			user.notifications.build { |n| n.sms "Test" }
 			user.save
 
-			response = JSON.parse(user.notifications.last.response)
-
-			expect(response["sms"][0]["status"]).to eq("queued")
+			expect(user.notifications.last.sms_notifications.last.response.first[:status]).to eq("queued")
 
 			expect(user.notifications.count).to eq(1)
 
-			expect(user.notifications.last.to_phone).to eq user.phone
+			expect(user.notifications.last.sms_notifications.last.to).to eq user.phone
 
 		end
 
@@ -100,13 +117,11 @@ describe Voltron::Notify, type: :module do
 			end
 			user.save
 
-			response = JSON.parse(user.notifications.last.response)
-
-			expect(response["sms"][0]["status"]).to eq("queued")
+			expect(user.notifications.last.sms_notifications.last.response.first[:status]).to eq("queued")
 
 			expect(user.notifications.count).to eq(1)
 
-			expect(user.notifications.last.to_phone).to eq user.phone
+			expect(user.notifications.last.sms_notifications.last.to).to eq user.phone
 		end
 
 		it "should fail to save if notification sms message is blank" do
@@ -119,7 +134,6 @@ describe Voltron::Notify, type: :module do
 		end
 
 		it "should fail to save if notification sms recipient is invalid" do
-			#skip "Sends an SMS message"
 			user.notifications.build { |n| n.sms "Test", to: "abcdefg" }
 			user.save
 
@@ -143,19 +157,19 @@ describe Voltron::Notify, type: :module do
 			user.notifications.build { |n| n.sms "Test" }
 			user.save
 
-			expect(user.notifications.last.sms_instance.request.length).to eq(1)
+			expect(user.notifications.last.sms_notifications.last.request.length).to eq(1)
 		end
 
 		it "should increase the size of the sms request array by number of messages - 1 when delivered" do
 			#skip "Sends an SMS message"
-			notification = user.notifications.build do |n|
+			user.notifications.build do |n|
 				n.sms "Test With Attachment" do
 					attach "https://images.unsplash.com/photo-1436891620584-47fd0e565afb?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&s=df6386c2e327ae9dbc7e5be0bef4e1d6"
 					attach "2.jpg"
 				end
 			end
 
-			expect { user.save }.to change(notification.sms_instance.request, :length).from(0).to(2)
+			expect { user.save }.to change { user.notifications.last.sms_notifications.last.request.length }.from(0).to(2)
 		end
 
 		it "should return false if phone number is not valid" do
@@ -163,18 +177,35 @@ describe Voltron::Notify, type: :module do
 				n.sms "Test", to: "abc123"
 			end
 
-			expect(notification.sms_instance.valid_phone?).to eq(false)
+			expect(notification.sms_notifications.last.valid_phone?).to eq(false)
+		end
+
+		it "should have a non-empty request sms hash after delivering" do
+			#skip "Sends an SMS message"
+			user.notifications.build { |n| n.sms "Test" }
+			user.save
+
+			expect(user.notifications.last.sms_notifications.last.request).to_not be_blank
+		end
+
+		it "should have a non-empty response sms hash after delivering" do
+			#skip "Sends an SMS message"
+			user.notifications.build { |n| n.sms "Test" }
+			user.save
+
+			expect(user.notifications.last.sms_notifications.last.response).to_not be_blank
+		end
+
+		it "should enqueue an sms delivery job when saved" do
+			Voltron.config.notify.use_queue = true
+			user.notifications.build do |n|
+				n.sms "Test With Attachment" do
+					attach "1.jpg"
+				end
+			end
+
+			expect { user.save }.to have_enqueued_job.on_queue("sms")
 		end
 
 	end
-
-	#it "should have notifications if notifyable" do
-	#	expect(user).not_to respond_to(:notifications)
-
-	#	user.class.notifyable
-
-	#	expect(user).to respond_to(:notifications)
-	#	expect(user.notifications.count).to eq(0)
-	#end
-
 end

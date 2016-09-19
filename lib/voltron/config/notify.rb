@@ -7,14 +7,17 @@ module Voltron
 
 		class Notify
 
+			attr_accessor :use_queue, :delay
+
 			# SMS config settings
 			attr_accessor :sms_account_sid, :sms_auth_token, :sms_from
 
 			# Email config settings
-			attr_accessor :email_delay, :email_from
+			attr_accessor :email_from
 
 			def initialize
-				@email_delay ||= 0.seconds
+				@use_queue ||= false
+				@delay ||= 0.seconds
 				@email_from ||= "no-reply@example.com"
 			end
 

@@ -1,16 +1,17 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 
-
 require "simplecov"
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
   SimpleCov::Formatter::HTMLFormatter
 )
 
-SimpleCov.start
+SimpleCov.start do
+  add_filter "/railsapp/"
+end
 
-require File.expand_path('../app/config/environment', __FILE__)
+require File.expand_path('../railsapp/config/environment', __FILE__)
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'spec_helper'
