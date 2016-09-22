@@ -21,7 +21,7 @@ describe Voltron::NotificationMailer, type: :mailer do
 
     last_email = ActionMailer::Base.deliveries.last
 
-    expect(last_email.body.raw_source).to eq("<html>\n\t<body>\n\t\tTest Body\n\t</body>\n</html>\n")
+    expect(last_email.body.raw_source).to eq("<html>\n  <body>\n    Test Body\n  </body>\n</html>\n")
   end
 
 end
