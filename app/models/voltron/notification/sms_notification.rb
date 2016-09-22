@@ -32,17 +32,17 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 	end
 
 	def after_deliver
+		# We are before_create so we can just set the attribute values, it will be saved after this
+		self.request_json = @request.to_json
+		self.response_json = @response.to_json
+		self.sid = @response.first[:sid]
+		self.status = @response.first[:status]
+
 		if use_queue?
 			Voltron.log @response, "SMS", :cyan
 			Voltron.log response, "SMS", :cyan
 			# Update if using queue since this method will be hit after_create
-			#self.update(request_json: @request.to_json, response_json: @response.to_json, sid: response.first[:sid], status: response.first[:status])
-		else
-			# We are before_create so we can just set the attribute values, it will be saved after this
-			self.request_json = @request.to_json
-			self.response_json = @response.to_json
-			self.sid = response.first[:sid]
-			self.status = response.first[:status]
+			self.update(request_json: @request.to_json, response_json: @response.to_json, sid: @response.first[:sid], status: @response.first[:status])
 		end
 	end
 
@@ -60,9 +60,9 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
 		# ... Then send the last attachment (if any) with the actual text body. This way we're not sending multiple SMS's with same body
 		client.messages.create({ from: from_formatted, to: to_formatted, body: message, media_url: all_attachments.shift }.compact)
+		Voltron.log client.last_response.body, "SMS", :cyan
 		@request << Rack::Utils.parse_nested_query(client.last_request.body)
 		@response << JSON.parse(client.last_response.body)
-		Voltron.log @response, "SMS", :cyan
 		after_deliver
 	end
 
