@@ -1,5 +1,5 @@
 module Voltron
-	class Encrypt
+	class Notify
 		module Generators
 			class InstallGenerator < Rails::Generators::Base
 
