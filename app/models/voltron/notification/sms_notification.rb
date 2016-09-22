@@ -33,8 +33,10 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
 	def after_deliver
 		if use_queue?
+			Voltron.log @response, "SMS", :cyan
+			Voltron.log response, "SMS", :cyan
 			# Update if using queue since this method will be hit after_create
-			self.update(request_json: @request.to_json, response_json: @response.to_json, sid: response.first[:sid], status: response.first[:status])
+			#self.update(request_json: @request.to_json, response_json: @response.to_json, sid: response.first[:sid], status: response.first[:status])
 		else
 			# We are before_create so we can just set the attribute values, it will be saved after this
 			self.request_json = @request.to_json
