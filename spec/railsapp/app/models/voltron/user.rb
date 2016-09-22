@@ -1,5 +1,5 @@
 class Voltron::User < ActiveRecord::Base
 
-	notifyable
+  notifyable
 
 end
