@@ -56,15 +56,6 @@ module Voltron
             self.errors.add :email, error
           end
         end
-
-        # Return false if there are any errors, stopping the save process
-        if self.errors.messages.any?
-          if Rails::VERSION::MAJOR >= 5
-            throw :abort
-          else
-            false
-          end
-        end
       end
   end
 end
