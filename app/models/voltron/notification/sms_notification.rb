@@ -60,6 +60,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 		client.messages.create({ from: from_formatted, to: to_formatted, body: message, media_url: all_attachments.shift }.compact)
 		@request << Rack::Utils.parse_nested_query(client.last_request.body)
 		@response << JSON.parse(client.last_response.body)
+		Voltron.log @response, "SMS", :cyan
 		after_deliver
 	end
 
