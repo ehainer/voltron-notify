@@ -1,3 +1,4 @@
+require "voltron"
 require "voltron/notify/version"
 require "voltron/config/notify"
 

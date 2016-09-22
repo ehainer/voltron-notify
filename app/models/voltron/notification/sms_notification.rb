@@ -12,6 +12,8 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
 	after_create :deliver_later, if: :use_queue?
 
+	include Rails.application.routes.url_helpers
+
 	def setup
 		@request = []
 		@response = []
