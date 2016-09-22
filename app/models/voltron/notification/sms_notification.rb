@@ -32,10 +32,16 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 	end
 
 	def after_deliver
-		self.request_json = @request.to_json
-		self.response_json = @response.to_json
-		self.sid = response.first[:sid]
-		self.status = response.first[:status]
+		if use_queue?
+			# Update if using queue since this method will be hit after_create
+			self.update(request_json: @request.to_json, response_json: @response.to_json, sid: response.first[:sid], status: response.first[:status])
+		else
+			# We are before_create so we can just set the attribute values, it will be saved after this
+			self.request_json = @request.to_json
+			self.response_json = @response.to_json
+			self.sid = response.first[:sid]
+			self.status = response.first[:status]
+		end
 	end
 
 	def deliver_now
