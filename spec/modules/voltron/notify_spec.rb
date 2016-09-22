@@ -95,7 +95,7 @@ describe Voltron::Notify, type: :module do
 	context "SMS Notifications" do
 
 		it "should send an sms notification when associated model saved" do
-			skip "Sends an SMS message"
+			#skip "Sends an SMS message"
 			user.notifications.build { |n| n.sms "Test" }
 			user.save
 
@@ -108,7 +108,7 @@ describe Voltron::Notify, type: :module do
 		end
 
 		it "should send an sms with one or more attached images when saved" do
-			skip "Sends an SMS message"
+			#skip "Sends an SMS message"
 			user.notifications.build do |n|
 				n.sms "Test With Attachments" do
 					attach "https://images.unsplash.com/photo-1436891678271-9c672565d8f6?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&s=19a603025f5f82e92731fadf96172acf"
@@ -153,7 +153,7 @@ describe Voltron::Notify, type: :module do
 		end
 
 		it "should have a non-empty request after delivering sms" do
-			skip "Sends an SMS message"
+			#skip "Sends an SMS message"
 			user.notifications.build { |n| n.sms "Test" }
 			user.save
 
@@ -161,7 +161,7 @@ describe Voltron::Notify, type: :module do
 		end
 
 		it "should increase the size of the sms request array by number of messages - 1 when delivered" do
-			skip "Sends an SMS message"
+			#skip "Sends an SMS message"
 			user.notifications.build do |n|
 				n.sms "Test With Attachment" do
 					attach "https://images.unsplash.com/photo-1436891620584-47fd0e565afb?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&s=df6386c2e327ae9dbc7e5be0bef4e1d6"
@@ -181,7 +181,7 @@ describe Voltron::Notify, type: :module do
 		end
 
 		it "should have a non-empty request sms hash after delivering" do
-			skip "Sends an SMS message"
+			#skip "Sends an SMS message"
 			user.notifications.build { |n| n.sms "Test" }
 			user.save
 
@@ -189,7 +189,7 @@ describe Voltron::Notify, type: :module do
 		end
 
 		it "should have a non-empty response sms hash after delivering" do
-			skip "Sends an SMS message"
+			#skip "Sends an SMS message"
 			user.notifications.build { |n| n.sms "Test" }
 			user.save
 
@@ -204,7 +204,7 @@ describe Voltron::Notify, type: :module do
 				end
 			end
 
-			expect { user.save }.to have_enqueued_job.on_queue("sms")
+			expect { user.save }.to have_enqueued_job.on_queue("default")
 		end
 
 	end
