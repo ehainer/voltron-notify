@@ -1,5 +1,5 @@
 module Voltron
-	class Notify
+	module Notify
 		module Generators
 			class InstallGenerator < Rails::Generators::Base
 
