@@ -20,8 +20,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails", "~> 4.2"
   spec.add_dependency "twilio-ruby", "~> 4.11"
-  spec.add_dependency "rack", "~> 2.0"
-  spec.add_dependency "sidekiq", "~> 4.2"
+  spec.add_dependency "rack", "~> 1.6"
   spec.add_dependency "voltron", "~> 0.1.0"
 
   spec.add_development_dependency "simplecov", "0.11.0"
