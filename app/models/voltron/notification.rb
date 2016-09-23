@@ -7,6 +7,8 @@ module Voltron
 
     has_many :email_notifications
 
+    before_validation :prepare
+
     before_validation :validate
 
     def email(subject, **args, &block)
@@ -56,6 +58,14 @@ module Voltron
             self.errors.add :email, error
           end
         end
+      end
+
+      def prepare
+        # Set the to value for both the email and phone, if any on this model
+        # This method is also called from the before_validation block in the notify module
+        # but we do it here in case the notification was created using resource.create
+        # instead of resource.build -> resource.save
+        to notifyable.try(:email), notifyable.try(:phone)
       end
   end
 end
