@@ -53,10 +53,10 @@ CONTENT
         end
 
         def copy_migrations
-          copy_migration "create_voltron_notifications.rb"
-          copy_migration "create_voltron_notification_sms_notifications.rb"
-          copy_migration "create_voltron_notification_email_notifications.rb"
-          copy_migration "create_voltron_notification_sms_notification_attachments.rb"
+          copy_migration "create_voltron_notifications"
+          copy_migration "create_voltron_notification_sms_notifications"
+          copy_migration "create_voltron_notification_email_notifications"
+          copy_migration "create_voltron_notification_sms_notification_attachments"
         end
 
         def copy_views
@@ -66,7 +66,7 @@ CONTENT
         protected
 
           def copy_migration(filename)
-            if self.class.migration_exists?(Rails.root.join("db", "migrate", "#{filename}"))
+            if self.class.migration_exists?(Rails.root.join("db", "migrate"), filename)
               say_status("skipped", "Migration #{filename}.rb already exists")
             else
               migration_template "db/migrate/#{filename}.rb", Rails.root.join("db", "migrate", "#{filename}.rb")
