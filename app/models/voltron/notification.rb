@@ -11,12 +11,20 @@ module Voltron
 
     before_validation :validate
 
+    PERMITTED_ATTRIBUTES = [:to, :from, :subject]
+
     def email(subject, **args, &block)
       # Build the options hash from the provided arguments
-      options = { subject: subject }.merge(**args)
+      options = { subject: subject }.merge(**args).select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) }
+
+      # Get the remaining args as params, that will eventually become assigns in the mailer template
+      params = { subject: subject }.merge(**args).reject { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) }
 
       # Build a new SMS notification object
       notification_email = email_notifications.build(options)
+
+      # Set the email vars (assigns)
+      notification_email.vars = params
 
       # If a block is provided, allow calls to methods like `attach`
       notification_email.instance_exec &block if block_given?
