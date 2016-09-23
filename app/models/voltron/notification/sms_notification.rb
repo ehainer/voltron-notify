@@ -90,7 +90,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     end
   end
 
-  def errors
+  def error_messages
     output = []
     output << "recipient cannot be blank" if to.blank?
     output << "recipient is not a valid phone number" unless valid_phone?

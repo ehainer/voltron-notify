@@ -63,17 +63,16 @@ describe Voltron::Notify, type: :module do
 
       expect(user).to_not be_valid
 
-      expect(user.errors.full_messages).to include "Notifications email subject cannot be blank"
+      expect(user.errors.full_messages).to include "Email subject cannot be blank"
     end
 
     it "should fail to save if notification email recipient is blank" do
       user.email = nil
       user.notifications.build { |n| n.email "Test" }
-      user.save
 
       expect(user).to_not be_valid
 
-      expect(user.errors.full_messages).to include "Notifications email recipient cannot be blank"
+      expect(user.errors.full_messages).to include "Email recipient cannot be blank"
     end
 
     it "should have a non-empty request email hash after delivering" do
@@ -130,7 +129,7 @@ describe Voltron::Notify, type: :module do
 
       expect(user).to_not be_valid
 
-      expect(user.errors.full_messages).to include "Notifications sms message cannot be blank"
+      expect(user.errors.full_messages).to include "Sms message cannot be blank"
     end
 
     it "should fail to save if notification sms recipient is invalid" do
@@ -139,7 +138,7 @@ describe Voltron::Notify, type: :module do
 
       expect(user).to_not be_valid
 
-      expect(user.errors.full_messages).to include "Notifications sms recipient is not a valid phone number"
+      expect(user.errors.full_messages).to include "Sms recipient is not a valid phone number"
     end
 
     it "should fail to save if notification sms recipient is blank" do
@@ -149,7 +148,7 @@ describe Voltron::Notify, type: :module do
 
       expect(user).to_not be_valid
 
-      expect(user.errors.full_messages).to include "Notifications sms recipient cannot be blank"
+      expect(user.errors.full_messages).to include "Sms recipient cannot be blank"
     end
 
     it "should have a non-empty request after delivering sms" do

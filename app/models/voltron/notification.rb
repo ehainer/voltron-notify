@@ -11,7 +11,7 @@ module Voltron
 
     def email(subject, **args, &block)
       # Build the options hash from the provided arguments
-      options = { subject: subject, from: Voltron.config.notify.email_from }.merge(**args)
+      options = { subject: subject }.merge(**args)
 
       # Build a new SMS notification object
       notification_email = email_notifications.build(options)
@@ -45,14 +45,14 @@ module Voltron
       def validate
         # Add SMS related errors to self
         sms_notifications.each do |n|
-          n.errors.each do |error|
+          n.error_messages.each do |error|
             self.errors.add :sms, error
           end
         end
 
         # Add Email related errors to self
         email_notifications.each do |n|
-          n.errors.each do |error|
+          n.error_messages.each do |error|
             self.errors.add :email, error
           end
         end

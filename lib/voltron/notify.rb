@@ -29,7 +29,7 @@ module Voltron
             # If not valid, populate the childs error messages in this models errors object
             unless notification.valid?
               notification.errors.messages.each do |k, errors|
-                errors.each { |error| self.errors.add "notifications.#{k}", error }
+                errors.each { |error| self.errors.add k, error }
               end
             end
           end
