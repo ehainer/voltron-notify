@@ -3,6 +3,8 @@ module Voltron
     module Generators
       class InstallGenerator < Rails::Generators::Base
 
+        include Rails::Generators::Migration
+
         source_root File.expand_path("../../../templates", __FILE__)
 
         desc "Add Voltron Notify initializer"
@@ -51,24 +53,25 @@ CONTENT
         end
 
         def copy_migrations
-          copy_file "db/migrate/create_voltron_notifications.rb", Rails.root.join("db", "migrate", "#{migration_time}_create_voltron_notifications.rb") unless migration_exists?("create_voltron_notifications.rb")
-          copy_file "db/migrate/create_voltron_notification_sms_notifications.rb", Rails.root.join("db", "migrate", "#{migration_time}_create_voltron_notification_sms_notifications.rb") unless migration_exists?("create_voltron_notification_sms_notifications.rb")
-          copy_file "db/migrate/create_voltron_notification_email_notifications.rb", Rails.root.join("db", "migrate", "#{migration_time}_create_voltron_notification_email_notifications.rb") unless migration_exists?("create_voltron_notification_email_notifications.rb")
-          copy_file "db/migrate/create_voltron_notification_sms_notification_attachments.rb", Rails.root.join("db", "migrate", "#{migration_time}_create_voltron_notification_sms_notification_attachments.rb") unless migration_exists?("create_voltron_notification_sms_notification_attachments.rb")
+          copy_migration "create_voltron_notifications.rb"
+          copy_migration "create_voltron_notification_sms_notifications.rb"
+          copy_migration "create_voltron_notification_email_notifications.rb"
+          copy_migration "create_voltron_notification_sms_notification_attachments.rb"
         end
 
         def copy_views
           copy_file "../../../app/views/voltron/notification_mailer/notify.html.erb", Rails.root.join("app", "views", "voltron", "notification_mailer", "notify.html.erb")
         end
 
-        def migration_time
-          @migration_id ||= Time.now.strftime("%Y%m%d%H%M%S").to_i
-          @migration_id += 1
-        end
+        protected
 
-        def migration_exists?(name)
-          Dir[Rails.root.join("db", "migrate", "*#{name}")].length > 0
-        end
+          def copy_migration(filename)
+            if self.class.migration_exists?(Rails.root.join("db", "migrate", "#{filename}"))
+              say_status("skipped", "Migration #{filename}.rb already exists")
+            else
+              migration_template "db/migrate/#{filename}.rb", Rails.root.join("db", "migrate", "#{filename}.rb")
+            end
+          end
       end
     end
   end
