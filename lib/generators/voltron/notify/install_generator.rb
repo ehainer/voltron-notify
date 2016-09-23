@@ -57,6 +57,10 @@ CONTENT
           copy_file "db/migrate/create_voltron_notification_sms_notification_attachments.rb", Rails.root.join("db", "migrate", "#{migration_time}_create_voltron_notification_sms_notification_attachments.rb")
         end
 
+        def copy_views
+          copy_file "../../../app/views/voltron/notification_mailer/notify.html.erb", Rails.root.join("app", "views", "voltron", "notification_mailer", "notify.html.erb")
+        end
+
         def migration_time
           @migration_id ||= Time.now.strftime("%Y%m%d%H%M%S").to_i
           @migration_id += 1
