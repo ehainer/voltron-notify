@@ -11,14 +11,14 @@ module Voltron
 
     before_validation :validate
 
-    PERMITTED_ATTRIBUTES = [:to, :from, :subject]
+    PERMITTED_ATTRIBUTES = [:to, :from]
 
     def email(subject, **args, &block)
-      # Build the options hash from the provided arguments
-      options = { subject: subject }.merge(**args).select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) }
+      # All args can be treated as params, but add the :subject param first
+      params = { subject: subject }.merge(**args)
 
-      # Get the remaining args as params, that will eventually become assigns in the mailer template
-      params = { subject: subject }.merge(**args).reject { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) }
+      # Build the options hash from the provided params
+      options = params.select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) }
 
       # Build a new SMS notification object
       notification_email = email_notifications.build(options)
@@ -32,7 +32,7 @@ module Voltron
 
     def sms(message, **args, &block)
       # Build the options hash from the provided arguments
-      options = { message: message, from: Voltron.config.notify.sms_from }.merge(**args)
+      options = { message: message, from: Voltron.config.notify.sms_from }.merge(**args).select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) }
 
       # Build a new SMS notification object
       notification_sms = sms_notifications.build(options)

@@ -74,6 +74,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     @mailer_arguments = *args
   end
 
+  # TODO: Move this to actual validates_* methods
   def error_messages
     output = []
     output << "recipient cannot be blank" if to.blank?

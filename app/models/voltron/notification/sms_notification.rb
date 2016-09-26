@@ -90,6 +90,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     end
   end
 
+  # TODO: Move this to actual validates_* methods
   def error_messages
     output = []
     output << "recipient cannot be blank" if to.blank?

@@ -2,7 +2,7 @@
 
 # Voltron::Notify
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/voltron/notify`. To experiment with that code, run `bin/console` for an interactive prompt.
+Voltron Notify is an attempt to join Twilio's SMS api with Rails' default mailer functionality into one single method.
 
 ## Installation
 
@@ -20,9 +20,77 @@ Or install it yourself as:
 
     $ gem install voltron-notify
 
+Then run the following to create the voltron.rb initializer (if not exists already) and add the notify config:
+
+    $ rails g voltron:notify:install
+
 ## Usage
 
-TODO: Write usage instructions here
+Once installed and configured, add `notifyable` at the top of any model you wish to be able to send notifications, such as:
+
+```ruby
+class User < ActiveRecord::Base
+
+  notifyable
+
+end
+```
+
+`notifyable` will create a notifications association on whatever model it is called on. Once done, you can utilize Voltron Notify like so:
+
+```ruby
+@user = User.find(1)
+
+@user.notifications.create do |n|
+  # First argument is SMS message text, second argument is hash containing zero or more of: [:to, :from]
+  n.sms "This is my message", to: "1 (234) 567-8910"
+
+  # and/or ...
+
+  # First argument is email subject, remaining arguments can consist of [:to, :from] or any other param you'd like,
+  # they will all be converted to @variables for use in the mailer template
+  n.email "This is the mail subject", { to: "info@example.com" }, { param_one: "Hi there", param_two: "" }
+end
+```
+
+While you may specify the :to and :from as one of the arguments, by default the :from value of each notification type comes from `Voltron.config.notify.email_from` and `Voltron.config.notify.sms_from`. The value of :to by default will attempt to be retrieved by calling `.phone` or `.email` on the notifyable model itself. So given a User model with attributes (or methods) `email` and `phone`, the following will send notifications to those values:
+
+```ruby
+@user = User.find(1) #<User id: 1, phone: "1234567890", email: "info@example.com", created_at: "2016-09-23 16:49:20", updated_at: "2016-09-23 16:49:20">
+
+@user.notifications.create do |n|
+  n.sms "Hello from SMS" # Will send to +1 (123) 456-7890
+  n.email "Hello from Email" # Will send to info@example.com
+end
+
+# @user.notifications.build { |n| ... } ... followed by @user.save works the same way
+```
+
+Optionally, you may pass a block to the `sms` or `email` methods that allows for additional functionality, like including attachments or overriding the `email` method default mailer/method:
+
+```ruby
+@user.notifications.create do |n|
+  n.sms "Hello from SMS" do
+    attach "picture.jpg" # Attach an image using the rails asset pipeline by specifying just the filename
+    attach "http://www.someimagesite.com/example/demo/image.png" # Or just provide a url to a supported file beginning with "http"
+  end
+
+  n.email "Hello from Email" do
+    attach "picture.jpg" # Uses the asset pipeline like above
+    attach "http://www.example.com/picture.jpg" # This WILL NOT work, email attachments don't work that way
+
+    mailer SiteMailer # Default: Voltron::NotificationMailer
+    method :send_my_special_notification # Default: :notify
+    arguments @any, list, of.arguments, :you, would, @like # In this case, the arguments used by SiteMailer.send_my_special_notification()
+  end
+end
+```
+
+Note that both SMS and Email notifications have validations on the :to/:from fields, the email subject, and the SMS body text. Since `notifications` is an association, any errors in the actual notification content will bubble up, possibly preventing the `notifyable` model from saving. For that reason, it may be more logical to instead use a @notifyable.notifications.build / @notifyable.save syntax to properly handle errors that may occur.
+
+## Integration with ActiveJob
+
+Voltron Notify supports sending both email (via deliver_later) and SMS (via Voltron::SmsJob and perform_later). To have all notifications be handled by ActiveJob in conjunction with Sidekiq/Resque/whatever you need only set the config value `Voltron.config.notify.use_queue` to `true`. If ActiveJob is configured properly notifications will send that way instead. You may also optionally set the delay for each notification by setting the value of `Voltron.config.notify.delay` to any time value (i.e. 5.minutes, 3.months, 0.seconds)
 
 ## Development
 
