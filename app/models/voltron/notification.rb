@@ -32,7 +32,7 @@ module Voltron
 
     def sms(message, **args, &block)
       # Build the options hash from the provided arguments
-      options = { message: message, from: Voltron.config.notify.sms_from, notifyable.class.name.downcase => notifyable }.merge(**args)
+      options = { message: message, from: Voltron.config.notify.sms_from }.merge(**args)
 
       # Build a new SMS notification object
       notification_sms = sms_notifications.build(options)
