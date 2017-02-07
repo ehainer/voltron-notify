@@ -15,7 +15,7 @@ module Voltron
 
     def email(subject, **args, &block)
       # Get the remaining args as params, that will eventually become assigns in the mailer template
-      params = { subject: subject }.merge(**args)
+      params = { subject: subject, notifyable.class.name.downcase => notifyable }.merge(**args)
 
       # Build the options hash from the provided arguments
       options = { subject: subject }.merge(**args.select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) })
@@ -32,7 +32,7 @@ module Voltron
 
     def sms(message, **args, &block)
       # Build the options hash from the provided arguments
-      options = { message: message, from: Voltron.config.notify.sms_from }.merge(**args)
+      options = { message: message, from: Voltron.config.notify.sms_from, notifyable.class.name.downcase => notifyable }.merge(**args)
 
       # Build a new SMS notification object
       notification_sms = sms_notifications.build(options)
