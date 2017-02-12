@@ -2,6 +2,8 @@ require "twilio-ruby"
 
 class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
+  include Rails.application.routes.url_helpers
+
   has_many :attachments
 
   belongs_to :notification
@@ -12,7 +14,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
   after_create :deliver_later, if: :use_queue?
 
-  include Rails.application.routes.url_helpers
+  validates :status, presence: false, inclusion: { in: %w( queued failed sent delivered undelivered ), message: "must be one of: queued, failed, sent, delivered, undelivered" }, on: :update
 
   def setup
     @request = []
@@ -40,8 +42,8 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
       # We are before_create so we can just set the attribute values, it will be saved after this
       self.request_json = @request.to_json
       self.response_json = @response.to_json
-      self.sid = @response.first[:sid]
-      self.status = @response.first[:status]
+      self.sid = response.first[:sid]
+      self.status = response.first[:status]
     end
   end
 
@@ -51,14 +53,14 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     # If sending more than 1 attachment, iterate through all but one attachment and send each without a body...
     if all_attachments.count > 1
       begin
-        client.messages.create({ from: from_formatted, to: to_formatted, media_url: all_attachments.shift }.compact)
+        client.messages.create({ from: from_formatted, to: to_formatted, media_url: all_attachments.shift, status_callback: try(:update_voltron_notification_url, host: Voltron.config.base_url) }.compact)
         @request << Rack::Utils.parse_nested_query(client.last_request.body)
         @response << JSON.parse(client.last_response.body)
       end until all_attachments.count == 1
     end
 
     # ... Then send the last attachment (if any) with the actual text body. This way we're not sending multiple SMS's with same body
-    client.messages.create({ from: from_formatted, to: to_formatted, body: message, media_url: all_attachments.shift }.compact)
+    client.messages.create({ from: from_formatted, to: to_formatted, body: message, media_url: all_attachments.shift, status_callback: try(:update_voltron_notification_url, host: Voltron.config.base_url) }.compact)
     @request << Rack::Utils.parse_nested_query(client.last_request.body)
     @response << JSON.parse(client.last_response.body)
     after_deliver

@@ -10,12 +10,28 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160922200951) do
+ActiveRecord::Schema.define(version: 20170210192240) do
+
+  create_table "companies", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "owner_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string   "email"
+    t.string   "phone"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "voltron_notification_email_notifications", force: :cascade do |t|
     t.string  "to"
     t.string  "from"
     t.string  "subject"
+    t.string  "template_path"
+    t.string  "template_name"
     t.string  "mailer_class"
     t.string  "mailer_method"
     t.text    "request_json"
@@ -39,6 +55,7 @@ ActiveRecord::Schema.define(version: 20160922200951) do
     t.integer  "notification_id"
     t.string   "status"
     t.string   "sid"
+    t.string   "error_code"
     t.datetime "created_at",      null: false
     t.datetime "updated_at",      null: false
   end
@@ -50,13 +67,6 @@ ActiveRecord::Schema.define(version: 20160922200951) do
     t.text     "response_json"
     t.datetime "created_at",      null: false
     t.datetime "updated_at",      null: false
-  end
-
-  create_table "voltron_users", force: :cascade do |t|
-    t.string   "email"
-    t.string   "phone"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
 end

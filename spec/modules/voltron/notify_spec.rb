@@ -89,6 +89,19 @@ describe Voltron::Notify, type: :module do
       expect(user.notifications.last.email_notifications.last.response).to_not be_blank
     end
 
+    it "should use a defined template if specified" do
+      user.notifications.build do |n|
+        n.email "Test" do
+          template "custom_mailer/template.test.html.erb"
+        end
+      end
+
+      user.save
+
+      expect(user.notifications.last.email_notifications.last.template_path).to eq("custom_mailer")
+      expect(user.notifications.last.email_notifications.last.template_name).to eq("template.test")
+    end
+
   end
 
   context "SMS Notifications" do
@@ -103,7 +116,6 @@ describe Voltron::Notify, type: :module do
       expect(user.notifications.count).to eq(1)
 
       expect(user.notifications.last.sms_notifications.last.to).to eq user.phone
-
     end
 
     it "should send an sms with one or more attached images when saved" do

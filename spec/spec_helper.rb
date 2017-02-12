@@ -101,14 +101,14 @@ RSpec.configure do |config|
 
   config.before(:all) do
     FactoryGirl.reload
-    Voltron.config.notify.sms_from = "+19707374178"
-    Voltron.config.notify.sms_account_sid = "AC29e5a3de3d7ec13567c701d8807cd55b"
-    Voltron.config.notify.sms_auth_token = "e3f2ea4cce981294ddb799313308e80d"
+    Voltron.config.notify.sms_from = "+19708250220"
+    Voltron.config.notify.sms_account_sid = "AC76a148df070904500df20c6f5092e1fd"
+    Voltron.config.notify.sms_auth_token = "8676524bd75ad3b84e2a708fbc16a7a8"
   end
 
   config.before(:each) do
     Voltron.config.debug = false
-    Voltron.config.base_url = "http://localhost:3000"
+    Voltron.config.base_url = "http://gem.minow.io"
     Voltron.config.notify.use_queue = false
   end
 end

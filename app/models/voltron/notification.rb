@@ -11,11 +11,11 @@ module Voltron
 
     before_validation :validate
 
-    PERMITTED_ATTRIBUTES = [:to, :from]
+    PERMITTED_ATTRIBUTES = [:to, :from, :template]
 
     def email(subject, **args, &block)
       # Get the remaining args as params, that will eventually become assigns in the mailer template
-      params = { subject: subject, notifyable.class.name.downcase => notifyable }.merge(**args)
+      params = { subject: subject, notifyable.class.name.downcase => notifyable }.compact.merge(**args)
 
       # Build the options hash from the provided arguments
       options = { subject: subject }.merge(**args.select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) })

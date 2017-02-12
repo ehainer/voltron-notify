@@ -9,8 +9,11 @@ class CreateVoltronNotificationSmsNotifications < ActiveRecord::Migration
       t.integer :notification_id
       t.string :status
       t.string :sid
+      t.string :error_code
 
       t.timestamps null: false
     end
+
+    add_index :voltron_notification_sms_notifications, :sid, unique: true
   end
 end

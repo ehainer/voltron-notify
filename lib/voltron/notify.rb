@@ -1,5 +1,6 @@
 require "voltron"
 require "voltron/notify/version"
+require "voltron/notify/action_dispatch/routes"
 require "voltron/config/notify"
 
 module Voltron

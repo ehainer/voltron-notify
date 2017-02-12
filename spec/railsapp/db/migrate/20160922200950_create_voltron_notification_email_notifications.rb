@@ -4,6 +4,8 @@ class CreateVoltronNotificationEmailNotifications < ActiveRecord::Migration
       t.string :to
       t.string :from
       t.string :subject
+      t.string :template_path
+      t.string :template_name
       t.string :mailer_class
       t.string :mailer_method
       t.text :request_json

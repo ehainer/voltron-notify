@@ -74,6 +74,12 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     @mailer_arguments = *args
   end
 
+  def template(fullpath)
+    parts = fullpath.split("/")
+    self.template_name = parts.pop.sub(/\.(html|text)\..*$/, "")
+    self.template_path = parts.join("/")
+  end
+
   # TODO: Move this to actual validates_* methods
   def error_messages
     output = []
@@ -91,8 +97,8 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     def mail
       # If no mailer arguments, use default order of arguments as defined in Voltron::NotificationMailer.notify
       if @mailer_arguments.blank?
-        @request << { to: to, from: from, subject: subject }.compact.merge(vars: vars, attachments: attachments)
-        mailer.send method, { to: to, from: from, subject: subject }.compact, vars, attachments
+        @request << { to: to, from: from, subject: subject, template_path: template_path, template_name: template_name }.compact.merge(vars: vars, attachments: attachments)
+        mailer.send method, { to: to, from: from, subject: subject, template_path: template_path, template_name: template_name }.compact, vars, attachments
       else
         @request << @mailer_arguments.compact
         mailer.send method, *@mailer_arguments.compact
