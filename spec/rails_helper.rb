@@ -9,6 +9,7 @@ SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
 
 SimpleCov.start do
   add_filter "/railsapp/"
+  add_filter "_spec.rb"
 end
 
 require File.expand_path('../railsapp/config/environment', __FILE__)
