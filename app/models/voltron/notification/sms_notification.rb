@@ -14,7 +14,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
   after_create :deliver_later, if: :use_queue?
 
-  validates :status, presence: false, inclusion: { in: %w( queued failed sent delivered undelivered ), message: "must be one of: queued, failed, sent, delivered, undelivered" }, on: :update
+  validates :status, presence: false, inclusion: { in: %w( accepted queued sending sent delivered received failed undelivered unknown ), message: 'must be one of: accepted, queued, sending, sent, delivered, received, failed, undelivered, or unknown' }, on: :update
 
   def setup
     @request = []
@@ -22,29 +22,28 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   end
 
   def request
-    # Wrap entire request in container hash so that we can call deep_symbolize_keys on it (in case it's an array)
-    # Wrap entire request in array and flatten so we can be sure the result is an array
-    [{ request: (JSON.parse(request_json) rescue nil) }.deep_symbolize_keys[:request]].flatten.compact
+    # Ensure returned object is an array, whose containing hashes all have symbolized keys, for consistency
+    out = Array.wrap((JSON.parse(request_json) rescue nil)).compact
+    out.each { |i| i.try(:deep_symbolize_keys!) }
+    out
   end
 
   def response
-    # Wrap entire response in container hash so that we can call deep_symbolize_keys on it (in case it's an array)
-    # Wrap entire response in array and flatten so we can be sure the result is an array
-    [{ response: (JSON.parse(response_json) rescue nil) }.deep_symbolize_keys[:response]].flatten.compact
+    # Ensure returned object is an array, whose containing hashes all have symbolized keys, for consistency
+    out = Array.wrap((JSON.parse(response_json) rescue nil)).compact
+    out.each { |i| i.try(:deep_symbolize_keys!) }
+    out
   end
 
   def after_deliver
-    if use_queue?
-      # if use_queue?, meaning if this was sent via ActiveJob, we need to update ourself
-      # since we got to here within after_create, meaning setting the attributes alone won't cut it
-      self.update(request_json: @request.to_json, response_json: @response.to_json, sid: @response.first[:sid], status: @response.first[:status])
-    else
-      # We are before_create so we can just set the attribute values, it will be saved after this
-      self.request_json = @request.to_json
-      self.response_json = @response.to_json
-      self.sid = response.first[:sid]
-      self.status = response.first[:status]
-    end
+    self.request_json = @request.to_json
+    self.response_json = @response.to_json
+    self.sid = response.first.try(:[], :sid)
+    self.status = response.first.try(:[], :status) || 'unknown'
+
+    # if use_queue?, meaning if this was sent via ActiveJob, we need to save ourself
+    # since we got to here within after_create, meaning setting the attributes alone won't cut it
+    self.save if use_queue?
   end
 
   def deliver_now
@@ -53,14 +52,14 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     # If sending more than 1 attachment, iterate through all but one attachment and send each without a body...
     if all_attachments.count > 1
       begin
-        client.messages.create({ from: from_formatted, to: to_formatted, media_url: all_attachments.shift, status_callback: try(:update_voltron_notification_url, host: Voltron.config.base_url) }.compact)
+        client.messages.create({ from: from_formatted, to: to_formatted, media_url: all_attachments.shift, status_callback: callback_url }.compact)
         @request << Rack::Utils.parse_nested_query(client.last_request.body)
         @response << JSON.parse(client.last_response.body)
       end until all_attachments.count == 1
     end
 
     # ... Then send the last attachment (if any) with the actual text body. This way we're not sending multiple SMS's with same body
-    client.messages.create({ from: from_formatted, to: to_formatted, body: message, media_url: all_attachments.shift, status_callback: try(:update_voltron_notification_url, host: Voltron.config.base_url) }.compact)
+    client.messages.create({ from: from_formatted, to: to_formatted, body: message, media_url: all_attachments.shift, status_callback: callback_url }.compact)
     @request << Rack::Utils.parse_nested_query(client.last_request.body)
     @response << JSON.parse(client.last_response.body)
     after_deliver
@@ -68,13 +67,13 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
   def deliver_later
     job = Voltron::SmsJob.set(wait: Voltron.config.notify.delay).perform_later self
-    @request << job.to_json
-    @response << { sid: nil, status: "enqueued" }
+    @request << job
+    @response << { sid: nil, status: 'unknown' }
     after_deliver
   end
 
   def attach(url)
-    if url.starts_with? "http"
+    if url.starts_with? 'http'
       attachments.build attachment: url
     else
       attachments.build attachment: Voltron.config.base_url + ActionController::Base.helpers.asset_url(url)
@@ -87,7 +86,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
       to_formatted
       true
     rescue => e
-      Voltron.log e.message, "Notify", :light_red
+      Voltron.log e.message, 'Notify', :light_red
       false
     end
   end
@@ -95,11 +94,18 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   # TODO: Move this to actual validates_* methods
   def error_messages
     output = []
-    output << "recipient cannot be blank" if to.blank?
-    output << "recipient is not a valid phone number" unless valid_phone?
-    output << "sender cannot be blank" if from.blank?
-    output << "message cannot be blank" if message.blank?
+    output << 'recipient cannot be blank' if to.blank?
+    output << 'recipient is not a valid phone number' unless valid_phone?
+    output << 'sender cannot be blank' if from.blank?
+    output << 'message cannot be blank' if message.blank?
     output
+  end
+
+  def callback_url
+    url = try(:update_voltron_notification_url, host: Voltron.config.base_url).to_s
+    # Don't allow local or blank urls
+    return nil if url.include?('localhost') || url.include?('127.0.0.1') || url.blank?
+    url
   end
 
   private
