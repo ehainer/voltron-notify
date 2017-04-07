@@ -88,6 +88,35 @@ end
 
 Note that both SMS and Email notifications have validations on the :to/:from fields, the email subject, and the SMS body text. Since `notifications` is an association, any errors in the actual notification content will bubble up, possibly preventing the `notifyable` model from saving. For that reason, it may be more logical to instead use a @notifyable.notifications.build / @notifyable.save syntax to properly handle errors that may occur.
 
+Also supported are Twilio status update callbacks for SMS notifications. To enable, you can add the following to your `routes.rb` file
+
+```ruby
+Rails.application.routes.draw do
+
+  allow_notification_update(options = {})
+
+end
+```
+
+By default, the default options for notification updates are as follows:
+
+```
+# The default url path that Twilio will POST updates to. Can be anything you want so long as it's a valid URL path
+path: '/notification/update'
+
+# The controller that will handle the notification update
+controller: 'voltron/notification'
+
+# The action that will perform the update
+action: 'update' #
+```
+
+If the value of `controller` or `action` are modified, it is assumed that whatever they point to will handle SMS notification updates. See the description column for "StatusCallback" parameter [here](https://www.twilio.com/docs/api/rest/sending-messages) for information on what Twilio will POST to the callback url. Or, take a look at this gems `app/controller/voltron/notification_controller.rb` file to see what it does by default.
+
+In order for `allow_notification_update` to generate the correct callback url, please ensure the value of `Voltron.config.base_url` is a valid host name. By default it will attempt to obtain this information from the `:host` parameter of `Rails.application.config.action_controller.default_url_options` but if specified in the Voltron initializer that will 
+
+Note that `allow_notification_update` does nothing if running on a host matching `/localhost|127\.0\.0\.1/i` Since Twilio can't reach locally running apps to POST to, the app will not even provide Twilio with the callback url to try it. If you have a local app host named Twilio will try and POST to it, but will obviously fail for the reasons previously stated. Basically, this feature only works on remotely accessible hosts.
+
 ## Integration with ActiveJob
 
 Voltron Notify supports sending both email (via deliver_later) and SMS (via Voltron::SmsJob and perform_later). To have all notifications be handled by ActiveJob in conjunction with Sidekiq/Resque/whatever you need only set the config value `Voltron.config.notify.use_queue` to `true`. If ActiveJob is configured properly notifications will send that way instead. You may also optionally set the delay for each notification by setting the value of `Voltron.config.notify.delay` to any time value (i.e. 5.minutes, 3.months, 0.seconds)

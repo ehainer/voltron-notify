@@ -9,11 +9,11 @@ class Voltron::NotificationController < ApplicationController
       if sms.update(update_params)
         head :ok
       else
-        Voltron.log "(SID: #{params[:MessageSid]}) " + sms.errors.full_messages.join(""), "Notification Update", :light_yellow
+        Voltron.log "(SID: #{params[:MessageSid]}) " + sms.errors.full_messages.join(''), 'Notification Update', Voltron::Notify::LOG_COLOR
         head :unprocessable_entity
       end
     else
-      Voltron.log "SMS Notification with id #{params[:MessageSid]} not found.", "Notification Update", :light_yellow
+      Voltron.log "SMS Notification with id #{params[:MessageSid]} not found.", 'Notification Update', Voltron::Notify::LOG_COLOR
       head :not_found
     end
   end

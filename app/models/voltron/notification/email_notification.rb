@@ -10,14 +10,19 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
   attr_accessor :vars, :attachments
 
+  validates_presence_of :to, message: I18n.t('voltron.notification.email.to_invalid')
+
+  validates_presence_of :to, message: I18n.t('voltron.notification.email.subject_invalid')
+
   def setup
     @request = []
     @response = []
     @vars ||= {}
     @attachments ||= {}
     @mailer_arguments = nil
-    self.mailer_class ||= "Voltron::NotificationMailer"
-    self.mailer_method ||= "notify"
+    self.mailer_class ||= Voltron.config.notify.default_mailer
+    self.mailer_method ||= Voltron.config.notify.default_method
+    template(Voltron.config.notify.default_template)
   end
 
   def request
@@ -76,15 +81,15 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
   def template(fullpath)
     parts = fullpath.split("/")
-    self.template_name = parts.pop.sub(/\.(html|text)\..*$/, "")
-    self.template_path = parts.join("/")
+    self.template_name = parts.pop.sub(/\.(html|text)\..*$/, '')
+    self.template_path = parts.join('/')
   end
 
   # TODO: Move this to actual validates_* methods
   def error_messages
     output = []
-    output << "recipient cannot be blank" if to.blank?
-    output << "subject cannot be blank" if subject.blank?
+    output << 'recipient cannot be blank' if to.blank?
+    output << 'subject cannot be blank' if subject.blank?
     output
   end
 

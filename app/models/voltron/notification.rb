@@ -11,7 +11,7 @@ module Voltron
 
     before_validation :validate
 
-    PERMITTED_ATTRIBUTES = [:to, :from, :template]
+    PERMITTED_ATTRIBUTES = [:to, :from]
 
     def email(subject, **args, &block)
       # Get the remaining args as params, that will eventually become assigns in the mailer template

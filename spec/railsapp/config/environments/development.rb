@@ -16,6 +16,8 @@ Rails.application.configure do
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
 
+  config.action_mailer.delivery_method = :letter_opener
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
@@ -39,9 +41,5 @@ Rails.application.configure do
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
 
-  Voltron.config.debug = true
-  Voltron.config.base_url = "https://gem.minow.io"
-  Voltron.config.notify.sms_from = "+19708250220"
-  Voltron.config.notify.sms_account_sid = "AC76a148df070904500df20c6f5092e1fd"
-  Voltron.config.notify.sms_auth_token = "8676524bd75ad3b84e2a708fbc16a7a8"
+  config.active_job.queue_adapter = :sidekiq
 end

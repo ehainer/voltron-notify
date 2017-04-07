@@ -72,11 +72,13 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     after_deliver
   end
 
-  def attach(url)
-    if url.starts_with? 'http'
-      attachments.build attachment: url
-    else
-      attachments.build attachment: Voltron.config.base_url + ActionController::Base.helpers.asset_url(url)
+  def attach(*urls)
+    urls.flatten.each do |url|
+      if url.starts_with? 'http'
+        attachments.build attachment: url
+      else
+        attachments.build attachment: Voltron.config.base_url + ActionController::Base.helpers.asset_url(url)
+      end
     end
   end
 
@@ -86,7 +88,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
       to_formatted
       true
     rescue => e
-      Voltron.log e.message, 'Notify', :light_red
+      Voltron.log e.message, 'Notify', Voltron::Notify::LOG_COLOR
       false
     end
   end

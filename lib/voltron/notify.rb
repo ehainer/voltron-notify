@@ -1,10 +1,12 @@
-require "voltron"
-require "voltron/notify/version"
-require "voltron/notify/action_dispatch/routes"
-require "voltron/config/notify"
+require 'voltron'
+require 'voltron/notify/version'
+require 'voltron/notify/action_dispatch/routes'
+require 'voltron/config/notify'
 
 module Voltron
   module Notify
+
+    LOG_COLOR = :light_yellow
 
     def notifyable
       include InstanceMethods
@@ -13,7 +15,7 @@ module Voltron
 
       after_validation :clean_notification_validation
 
-      has_many :notifications, as: :notifyable, class_name: "::Voltron::Notification"
+      has_many :notifications, as: :notifyable, class_name: '::Voltron::Notification'
     end
 
     module InstanceMethods
@@ -45,4 +47,4 @@ module Voltron
   end
 end
 
-require "voltron/notify/engine" if defined?(Rails)
+require 'voltron/notify/engine' if defined?(Rails)
