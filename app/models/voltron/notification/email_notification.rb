@@ -8,11 +8,11 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
   after_create :deliver_later, if: :use_queue?
 
+  validates_presence_of :to, message: I18n.t('voltron.notification.email.to_blank')
+
+  validates_presence_of :subject, message: I18n.t('voltron.notification.email.subject_blank')
+
   attr_accessor :vars, :attachments
-
-  validates_presence_of :to, message: I18n.t('voltron.notification.email.to_invalid')
-
-  validates_presence_of :to, message: I18n.t('voltron.notification.email.subject_invalid')
 
   def setup
     @request = []
@@ -26,15 +26,13 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
   end
 
   def request
-    # Wrap entire request in container hash so that we can call deep_symbolize_keys on it (in case it's an array)
-    # Wrap entire request in array and flatten so we can be sure the result is an array
-    [{ request: (JSON.parse(request_json) rescue Hash.new) }.deep_symbolize_keys[:request]].flatten
+    # Wrap entire request in array, for consistency
+    Array.wrap({ request: (JSON.parse(request_json) rescue {}) }.with_indifferent_access[:request])
   end
 
   def response
-    # Wrap entire response in container hash so that we can call deep_symbolize_keys on it (in case it's an array)
-    # Wrap entire response in array and flatten so we can be sure the result is an array
-    [{ response: (JSON.parse(response_json) rescue Hash.new) }.deep_symbolize_keys[:response]].flatten
+    # Wrap entire response in array, for consistency
+    Array.wrap({ response: (JSON.parse(response_json) rescue {}) }.with_indifferent_access[:response])
   end
 
   def after_deliver
@@ -72,7 +70,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
   end
 
   def method(meth = nil)
-    self.mailer_method = meth || mailer_method
+    self.mailer_method = (meth || mailer_method)
   end
 
   def arguments(*args)
@@ -83,14 +81,6 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     parts = fullpath.split("/")
     self.template_name = parts.pop.sub(/\.(html|text)\..*$/, '')
     self.template_path = parts.join('/')
-  end
-
-  # TODO: Move this to actual validates_* methods
-  def error_messages
-    output = []
-    output << 'recipient cannot be blank' if to.blank?
-    output << 'subject cannot be blank' if subject.blank?
-    output
   end
 
   private

@@ -1,0 +1,28 @@
+# This file will be merged with various other Voltron related YAML files with priority
+# given to what exists in this file to begin with (nothing you add/modify here will be overwritten)
+# whenever you run `rails g voltron:<gem_name>:install`,
+# only if the gem in question has any locale data associated with it
+
+---
+en:
+  activerecord:
+    attributes:
+      voltron/notification/email_notification:
+        to: Recipient
+        subject: Subject
+      voltron/notification/sms_notification:
+        to: Recipient
+        from: Sender
+        message: Message
+        status: Status
+  voltron:
+    notification:
+      email:
+        to_blank: cannot be blank
+        subject_blank: cannot be blank
+      sms:
+        to_blank: cannot be blank
+        from_blank: cannot be blank
+        message_blank: cannot be blank
+        invalid_phone: number "%{number}" is not a valid phone number
+        status_invalid: must be one of accepted, queued, sending, sent, delivered, received, failed, undelivered, or unknown

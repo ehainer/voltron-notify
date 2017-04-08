@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Voltron
   module Notify
     module Generators
@@ -13,7 +15,7 @@ module Voltron
 
           unless File.exist? voltron_initialzer_path
             unless system("cd #{Rails.root.to_s} && rails generate voltron:install")
-              puts 'Voltron initializer does not exist. Please ensure you have the 'voltron' gem installed and run `rails g voltron:install` to create it'
+              puts 'Voltron initializer does not exist. Please ensure you have the \'voltron\' gem installed and run `rails g voltron:install` to create it'
               return false
             end
           end
@@ -72,6 +74,35 @@ CONTENT
 
         def copy_views
           copy_file '../../../app/views/voltron/notification_mailer/notify.html.erb', Rails.root.join('app', 'views', 'voltron', 'notification_mailer', 'notify.html.erb')
+        end
+
+        def copy_locales
+          locale_path = Rails.root.join('config', 'locales', 'voltron.yml')
+          locale = YAML.load_file(locale_path).symbolize_keys rescue {}
+
+          compact_nested = Proc.new do |k, v|
+            v.respond_to?(:delete_if) ? (v.delete_if(&compact_nested); nil) : v.blank?
+          end
+
+          notification_path = File.expand_path('../../../templates/config/locales/voltron-notification.yml', __FILE__)
+          notification_locale = YAML.load_file(notification_path).symbolize_keys
+
+          # Remove keys that don't have values from both hashes
+          notification_locale.delete_if(&compact_nested)
+          locale.delete_if(&compact_nested)
+
+          # Merge the 2 yaml files, giving priority to the original locle file.
+          # We don't want to overwrite anything the user may have created on their own, or modified
+          notification_locale.deep_merge!(locale)
+
+          File.open(locale_path, 'w') do |f|
+            f.puts '# This file will be merged with various other Voltron related YAML files with priority'
+            f.puts '# given to what exists in this file to begin with (nothing you add/modify here will be overwritten)'
+            f.puts '# whenever you run `rails g voltron:<gem_name>:install`,'
+            f.puts '# only if the gem in question has any locale data associated with it'
+            f.puts
+            f.puts notification_locale.stringify_keys.to_yaml(line_width: -1)
+          end
         end
 
         protected

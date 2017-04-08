@@ -1,4 +1,4 @@
-require "twilio-ruby"
+require 'twilio-ruby'
 
 class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
@@ -14,7 +14,15 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
   after_create :deliver_later, if: :use_queue?
 
-  validates :status, presence: false, inclusion: { in: %w( accepted queued sending sent delivered received failed undelivered unknown ), message: 'must be one of: accepted, queued, sending, sent, delivered, received, failed, undelivered, or unknown' }, on: :update
+  validates :status, presence: false, inclusion: { in: %w( accepted queued sending sent delivered received failed undelivered unknown ), message: I18n.t('voltron.notification.sms.status_invalid') }, on: :update
+
+  validates_presence_of :to, message: I18n.t('voltron.notification.sms.to_blank')
+
+  validates_presence_of :from, message: I18n.t('voltron.notification.sms.from_blank')
+
+  validates_presence_of :message, message: I18n.t('voltron.notification.sms.message_blank')
+
+  validate :valid_phone_number
 
   def setup
     @request = []
@@ -22,17 +30,15 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   end
 
   def request
-    # Ensure returned object is an array, whose containing hashes all have symbolized keys, for consistency
+    # Ensure returned object is an array of request hashes, for consistency
     out = Array.wrap((JSON.parse(request_json) rescue nil)).compact
-    out.each { |i| i.try(:deep_symbolize_keys!) }
-    out
+    out.map { |h| h.with_indifferent_access }
   end
 
   def response
-    # Ensure returned object is an array, whose containing hashes all have symbolized keys, for consistency
+    # Ensure returned object is an array of response hashes, for consistency
     out = Array.wrap((JSON.parse(response_json) rescue nil)).compact
-    out.each { |i| i.try(:deep_symbolize_keys!) }
-    out
+    out.map { |h| h.with_indifferent_access }
   end
 
   def after_deliver
@@ -47,6 +53,9 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   end
 
   def deliver_now
+    @request = request
+    @response = response
+
     all_attachments = attachments.map(&:attachment)
 
     # If sending more than 1 attachment, iterate through all but one attachment and send each without a body...
@@ -68,7 +77,6 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   def deliver_later
     job = Voltron::SmsJob.set(wait: Voltron.config.notify.delay).perform_later self
     @request << job
-    @response << { sid: nil, status: 'unknown' }
     after_deliver
   end
 
@@ -93,16 +101,6 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     end
   end
 
-  # TODO: Move this to actual validates_* methods
-  def error_messages
-    output = []
-    output << 'recipient cannot be blank' if to.blank?
-    output << 'recipient is not a valid phone number' unless valid_phone?
-    output << 'sender cannot be blank' if from.blank?
-    output << 'message cannot be blank' if message.blank?
-    output
-  end
-
   def callback_url
     url = try(:update_voltron_notification_url, host: Voltron.config.base_url).to_s
     # Don't allow local or blank urls
@@ -111,6 +109,10 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   end
 
   private
+
+    def valid_phone_number
+      errors.add :to, I18n.t('voltron.notification.sms.invalid_phone', number: to) unless valid_phone?
+    end
 
     def use_queue?
       Voltron.config.notify.use_queue

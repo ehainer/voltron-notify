@@ -55,15 +55,15 @@ module Voltron
       def validate
         # Add SMS related errors to self
         sms_notifications.each do |n|
-          n.error_messages.each do |error|
-            self.errors.add :sms, error
+          unless n.valid?
+            n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
           end
         end
 
         # Add Email related errors to self
         email_notifications.each do |n|
-          n.error_messages.each do |error|
-            self.errors.add :email, error
+          unless n.valid?
+            n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
           end
         end
       end
