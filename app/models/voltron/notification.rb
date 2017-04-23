@@ -28,6 +28,9 @@ module Voltron
 
       # If a block is provided, allow calls to methods like `attach`
       notification_email.instance_exec &block if block_given?
+
+      # Return the email notification instance
+      notification_email
     end
 
     def sms(message, **args, &block)
@@ -39,6 +42,9 @@ module Voltron
 
       # If a block is provided, allow calls to methods like `attach`
       notification_sms.instance_exec &block if block_given?
+
+      # Return the SMS notification instance
+      notification_sms
     end
 
     # Called from the before_validation callback within `notifyable`

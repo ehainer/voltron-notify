@@ -32,4 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'factory_girl_rails', '>= 4.7'
   spec.add_development_dependency 'letter_opener', '>= 1.0.0'
   spec.add_development_dependency 'sidekiq', '~> 4.2.10'
+  spec.add_development_dependency 'byebug'
 end

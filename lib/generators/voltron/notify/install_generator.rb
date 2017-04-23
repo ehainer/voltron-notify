@@ -32,9 +32,6 @@ module Voltron
   # A queue is still only used if configured via config.active_job.queue_adapter
   # config.notify.use_queue = false
 
-  # How long to delay sending email/sms messages. Use this in conjunction with config.notify.use_queue
-  # config.notify.delay = 0.seconds
-
   # Twilio account id number
   # config.notify.sms_account_sid = ''
 

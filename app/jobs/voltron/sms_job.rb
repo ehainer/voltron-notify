@@ -1,7 +1,7 @@
 class Voltron::SmsJob < ActiveJob::Base
 
   def perform(sms)
-    sms.deliver_now
+    sms.send(:send_now)
   end
 
 end

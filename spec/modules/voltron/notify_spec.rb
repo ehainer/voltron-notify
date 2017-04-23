@@ -2,7 +2,14 @@ require "rails_helper"
 
 describe Voltron::Notify, type: :module do
 
+  include ActiveJob::TestHelper
+
   let(:user) { FactoryGirl.build(:user) }
+
+  after do
+    clear_enqueued_jobs
+    clear_performed_jobs
+  end
 
   it 'has a version number' do
     expect(Voltron::Notify::VERSION).not_to be nil
@@ -154,6 +161,24 @@ describe Voltron::Notify, type: :module do
       expect(user.notifications.last.email_notifications.last.template_name).to eq('template.test')
     end
 
+    it 'should accept options for enqueueing a job via deliver_later' do
+      Voltron.config.notify.use_queue = true
+      user.notifications.build do |n|
+        n.email('Test').deliver_later(wait: 10.minutes, queue: 'custom_mail_1')
+      end
+
+      expect { user.save }.to have_enqueued_job.on_queue('custom_mail_1')
+    end
+
+    it 'should accept options for enqueueing a job via deliver_later!' do
+      Voltron.config.notify.use_queue = true
+      user.notifications.build do |n|
+        n.email('Test').deliver_later!(wait: 10.minutes, queue: 'custom_mail_2')
+      end
+
+      expect { user.save }.to have_enqueued_job.on_queue('custom_mail_2')
+    end
+
   end
 
   context 'SMS Notifications' do
@@ -290,6 +315,26 @@ describe Voltron::Notify, type: :module do
 
       expect(last_sms_notification.request.last).to have_key(:StatusCallback)
       expect(last_sms_notification.sid).to_not be_nil
+    end
+
+    it 'should accept options for enqueueing a job via deliver_now' do
+      Voltron.config.notify.use_queue = true
+      user.notifications.build do |n|
+        n.sms('Test On Specific Now Queue').deliver_now(wait: 10.minutes, queue: 'custom_now')
+      end
+
+      expect_any_instance_of(Voltron::SmsJob).to receive(:perform_now)
+
+      user.save
+    end
+
+    it 'should accept options for enqueueing a job via deliver_later' do
+      Voltron.config.notify.use_queue = true
+      user.notifications.build do |n|
+        n.sms('Test On Specific Later Queue').deliver_later(wait: 10.minutes, queue: 'custom_later')
+      end
+
+      expect { user.save }.to have_enqueued_job.on_queue('custom_later')
     end
 
   end

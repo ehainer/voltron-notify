@@ -4,20 +4,20 @@ Voltron.setup do |config|
 
   # Whether or not to use the ActiveJob queue to handle sending email/sms messages
   # A queue is still only used if configured via config.active_job.queue_adapter
-  config.notify.use_queue = false
+  config.notify.use_queue = true
 
   # How long to delay sending email/sms messages. Use this in conjunction with config.notify.use_queue
   config.notify.delay = 0.seconds
 
   # Twilio account id number
-  config.notify.sms_account_sid = ''
+  config.notify.sms_account_sid = 'AC76a148df070904500df20c6f5092e1fd'
 
   # Twilio authentication token
-  config.notify.sms_auth_token = ''
+  config.notify.sms_auth_token = '8676524bd75ad3b84e2a708fbc16a7a8'
 
   # Default from phone number. Must be the number provided by Twilio.
   # Avoid the overhead of pre-formatting the number by entering in the format "+1234567890"
-  config.notify.sms_from = ''
+  config.notify.sms_from = '(970) 825-0220'
 
   # Default from email address. If not specified the default from in the mailer or the :from param on mail() is used
   config.notify.email_from = 'no-reply@example.com'

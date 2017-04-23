@@ -8,8 +8,10 @@ module Voltron
 
     LOG_COLOR = :light_yellow
 
-    def notifyable
+    def notifyable(defaults={})
       include InstanceMethods
+
+      @_notification_defaults = defaults.with_indifferent_access
 
       before_validation :validate_notifications
 
