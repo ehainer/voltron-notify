@@ -7,14 +7,14 @@ Voltron.setup do |config|
   config.notify.use_queue = true
 
   # Twilio account id number
-  config.notify.sms_account_sid = 'AC76a148df070904500df20c6f5092e1fd'
+  config.notify.sms_account_sid = 'ACd28309aa722db7d8ff5e16306780025b'
 
   # Twilio authentication token
-  config.notify.sms_auth_token = '8676524bd75ad3b84e2a708fbc16a7a8'
+  config.notify.sms_auth_token = 'f2e8193c4155ee020aab5c15feb176c8'
 
   # Default from phone number. Must be the number provided by Twilio.
   # Avoid the overhead of pre-formatting the number by entering in the format "+1234567890"
-  config.notify.sms_from = '(970) 825-0220'
+  config.notify.sms_from = '(970) 825-0806'
 
   # Default from email address. If not specified the default from in the mailer or the :from param on mail() is used
   config.notify.email_from = 'no-reply@example.com'

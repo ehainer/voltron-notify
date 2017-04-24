@@ -112,9 +112,9 @@ RSpec.configure do |config|
 
   config.before(:all) do
     FactoryGirl.reload
-    Voltron.config.notify.sms_from = '+19708250220'
-    Voltron.config.notify.sms_account_sid = 'AC76a148df070904500df20c6f5092e1fd'
-    Voltron.config.notify.sms_auth_token = '8676524bd75ad3b84e2a708fbc16a7a8'
+    Voltron.config.notify.sms_from = '+19708250806'
+    Voltron.config.notify.sms_account_sid = 'ACd28309aa722db7d8ff5e16306780025b'
+    Voltron.config.notify.sms_auth_token = 'f2e8193c4155ee020aab5c15feb176c8'
   end
 
   config.before(:each) do

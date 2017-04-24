@@ -60,7 +60,6 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
   def valid_phone?
     begin
-      #return true if to.blank? # Handle a blank `to` separately in the errors method below
       to_formatted
       true
     rescue => e

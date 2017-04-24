@@ -179,6 +179,24 @@ describe Voltron::Notify, type: :module do
       expect { user.save }.to have_enqueued_job.on_queue('custom_mail_2')
     end
 
+    it 'should deliver the email now if deliver_now is explicitly called' do
+      Voltron.config.notify.use_queue = true
+      user.notifications.build do |n|
+        n.email('Test').deliver_now
+      end
+
+      expect { user.save }.to change(ActionMailer::Base.deliveries, :count).by(1)
+    end
+
+    it 'should deliver the email now if deliver_now! is explicitly called' do
+      Voltron.config.notify.use_queue = true
+      user.notifications.build do |n|
+        n.email('Test').deliver_now!
+      end
+
+      expect { user.save }.to change(ActionMailer::Base.deliveries, :count).by(1)
+    end
+
   end
 
   context 'SMS Notifications' do

@@ -4,7 +4,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
   after_initialize :setup
 
-  before_create :send_now, unless: :use_queue?
+  before_create :send_now, if: Proc.new { |n| !n.send(:use_queue?) || n.immediate }
 
   # We have a separate check for +created+ because we trigger +save+ within this callback,
   # and there are known issues of recursion when that is the case. See: https://github.com/rails/rails/issues/14493
@@ -16,7 +16,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
   attr_accessor :vars, :attachments
 
-  attr_accessor :created
+  attr_accessor :created, :immediate
 
   def request
     Voltron::Notification.format_output_of(request_json)
@@ -56,6 +56,16 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     parts = fullpath.split('/')
     self.template_name = parts.pop.sub(/\.(html|text)\..*$/, '')
     self.template_path = parts.join('/')
+  end
+
+  def deliver_now
+    @delivery_method = :deliver_now
+    @immediate = true
+  end
+
+  def deliver_now!
+    @delivery_method = :deliver_now!
+    @immediate = true
   end
 
   def deliver_later(options={})
@@ -106,6 +116,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
     def after_deliver
       @created = true
+      @immediate = nil
       @mail_options = nil
       @delivery_method = nil
       self.request_json = @request.to_json
