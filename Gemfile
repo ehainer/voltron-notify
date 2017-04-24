@@ -1,6 +1,11 @@
 source 'https://rubygems.org'
-source 'http://gem.minow.io'
+source 'https://gem.minow.io'
 
 # Specify your gem's dependencies in voltron-notify.gemspec
-gem 'colorize'
+
+group :test do
+  gem 'simplecov'
+  gem 'codeclimate-test-reporter', '~> 1.0.0'
+end
+
 gemspec

@@ -1,21 +1,11 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 
-require "simplecov"
-
-SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
-  SimpleCov::Formatter::HTMLFormatter
-)
-
-SimpleCov.start do
-  add_filter "/railsapp/"
-  add_filter "_spec.rb"
-end
+require 'spec_helper'
 
 require File.expand_path('../railsapp/config/environment', __FILE__)
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
-require 'spec_helper'
 require 'rspec/rails'
 
 ActiveRecord::Migration.maintain_test_schema!
