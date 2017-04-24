@@ -29,11 +29,11 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   attr_accessor :created
 
   def request
-    output(request_json)
+    Voltron::Notification.format_output_of(request_json)
   end
 
   def response
-    output(response_json)
+    Voltron::Notification.format_output_of(response_json)
   end
 
   # Establish that we will perform the job immediately, and set the options
@@ -116,12 +116,6 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
     def default_options
       notification.notifyable.class.instance_variable_get('@_notification_defaults').try(:[], :sms) || {}
-    end
-
-    def output(json)
-      # Ensure returned object is an array of response hashes, for consistency
-      out = Array.wrap((JSON.parse(json) rescue nil)).compact
-      out.map { |h| h.with_indifferent_access }
     end
 
     def after_deliver

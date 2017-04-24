@@ -56,6 +56,12 @@ module Voltron
       sms_notifications.each { |n| n.to ||= phone }
     end
 
+    def self.format_output_of(json)
+      # Ensure returned object is an array of response hashes, for consistency
+      out = Array.wrap((JSON.parse(json) rescue nil)).compact
+      out.map { |h| h.with_indifferent_access }
+    end
+
     private
 
       def validate
@@ -65,19 +71,6 @@ module Voltron
             n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
           end
         end
-
-        #sms_notifications.each do |n|
-        #  unless n.valid?
-        #    n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
-        #  end
-        #end
-
-        ## Add Email related errors to self
-        #email_notifications.each do |n|
-        #  unless n.valid?
-        #    n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
-        #  end
-        #end
       end
 
       def prepare
