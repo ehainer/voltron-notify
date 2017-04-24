@@ -14,7 +14,7 @@ module Voltron
           voltron_initialzer_path = Rails.root.join('config', 'initializers', 'voltron.rb')
 
           unless File.exist? voltron_initialzer_path
-            unless system("cd #{Rails.root.to_s} && rails generate voltron:install")
+            unless system("cd #{Rails.root} && rails generate voltron:install")
               puts 'Voltron initializer does not exist. Please ensure you have the \'voltron\' gem installed and run `rails g voltron:install` to create it'
               return false
             end
@@ -77,7 +77,7 @@ CONTENT
           locale_path = Rails.root.join('config', 'locales', 'voltron.yml')
           locale = YAML.load_file(locale_path).symbolize_keys rescue {}
 
-          compact_nested = Proc.new do |k, v|
+          compact_nested = Proc.new do |_, v|
             v.respond_to?(:delete_if) ? (v.delete_if(&compact_nested); nil) : v.blank?
           end
 

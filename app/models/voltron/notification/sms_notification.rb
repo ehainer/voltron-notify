@@ -29,15 +29,11 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
   attr_accessor :created
 
   def request
-    # Ensure returned object is an array of request hashes, for consistency
-    out = Array.wrap((JSON.parse(request_json) rescue nil)).compact
-    out.map { |h| h.with_indifferent_access }
+    output(request_json)
   end
 
   def response
-    # Ensure returned object is an array of response hashes, for consistency
-    out = Array.wrap((JSON.parse(response_json) rescue nil)).compact
-    out.map { |h| h.with_indifferent_access }
+    output(response_json)
   end
 
   # Establish that we will perform the job immediately, and set the options
@@ -84,11 +80,12 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
       # If sending more than 1 attachment, iterate through all but one attachment and send each without a body...
       if all_attachments.count > 1
-        begin
+        loop do
+          break if all_attachments.count == 1
           client.messages.create({ from: from_formatted, to: to_formatted, media_url: all_attachments.shift, status_callback: callback_url }.compact)
           @request << Rack::Utils.parse_nested_query(client.last_request.body)
           @response << JSON.parse(client.last_response.body)
-        end until all_attachments.count == 1
+        end
       end
 
       # ... Then send the last attachment (if any) with the actual text body. This way we're not sending multiple SMS's with same body
@@ -119,6 +116,12 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
     def default_options
       notification.notifyable.class.instance_variable_get('@_notification_defaults').try(:[], :sms) || {}
+    end
+
+    def output(json)
+      # Ensure returned object is an array of response hashes, for consistency
+      out = Array.wrap((JSON.parse(json) rescue nil)).compact
+      out.map { |h| h.with_indifferent_access }
     end
 
     def after_deliver

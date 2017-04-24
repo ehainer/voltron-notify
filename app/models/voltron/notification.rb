@@ -18,7 +18,7 @@ module Voltron
       params = { subject: subject, notifyable.class.name.downcase => notifyable }.compact.merge(**args)
 
       # Build the options hash from the provided arguments
-      options = { subject: subject }.merge(**args.select { |k,v| PERMITTED_ATTRIBUTES.include?(k.to_sym) })
+      options = { subject: subject }.merge(**args.select { |k, _| PERMITTED_ATTRIBUTES.include?(k.to_sym) })
 
       # Build a new SMS notification object
       notification_email = email_notifications.build(options)
@@ -27,7 +27,7 @@ module Voltron
       notification_email.vars = params
 
       # If a block is provided, allow calls to methods like `attach`
-      notification_email.instance_exec &block if block_given?
+      notification_email.instance_exec(&block) if block_given?
 
       # Return the email notification instance
       notification_email
@@ -41,7 +41,7 @@ module Voltron
       notification_sms = sms_notifications.build(options)
 
       # If a block is provided, allow calls to methods like `attach`
-      notification_sms.instance_exec &block if block_given?
+      notification_sms.instance_exec(&block) if block_given?
 
       # Return the SMS notification instance
       notification_sms
@@ -59,19 +59,25 @@ module Voltron
     private
 
       def validate
-        # Add SMS related errors to self
-        sms_notifications.each do |n|
+        # Add SMS/Email related errors to self
+        (sms_notifications.to_a + email_notifications.to_a).each do |n|
           unless n.valid?
             n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
           end
         end
 
-        # Add Email related errors to self
-        email_notifications.each do |n|
-          unless n.valid?
-            n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
-          end
-        end
+        #sms_notifications.each do |n|
+        #  unless n.valid?
+        #    n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
+        #  end
+        #end
+
+        ## Add Email related errors to self
+        #email_notifications.each do |n|
+        #  unless n.valid?
+        #    n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
+        #  end
+        #end
       end
 
       def prepare

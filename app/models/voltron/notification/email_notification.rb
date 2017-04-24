@@ -19,13 +19,11 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
   attr_accessor :created
 
   def request
-    # Wrap entire request in array, for consistency
-    Array.wrap({ request: (JSON.parse(request_json) rescue {}) }.with_indifferent_access[:request])
+    output(request_json)
   end
 
   def response
-    # Wrap entire response in array, for consistency
-    Array.wrap({ response: (JSON.parse(response_json) rescue {}) }.with_indifferent_access[:response])
+    output(response_json)
   end
 
   def attach(file, name = nil)
@@ -35,7 +33,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     if file.is_a?(File)
       path = file.path
       file.close
-    elsif !File.exists?(path)
+    elsif !File.exist?(path)
       path = Voltron.asset.find(path)
     end
 
@@ -104,6 +102,12 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
     def default_options
       notification.notifyable.class.instance_variable_get('@_notification_defaults').try(:[], :email) || {}
+    end
+
+    def output(json)
+      # Ensure returned object is an array of response hashes, for consistency
+      out = Array.wrap((JSON.parse(json) rescue nil)).compact
+      out.map { |h| h.with_indifferent_access }
     end
 
     def after_deliver
