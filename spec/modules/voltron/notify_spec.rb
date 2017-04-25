@@ -338,7 +338,7 @@ describe Voltron::Notify, type: :module do
     it 'should accept options for enqueueing a job via deliver_now' do
       Voltron.config.notify.use_queue = true
       user.notifications.build do |n|
-        n.sms('Test On Specific Now Queue').deliver_now(wait: 10.minutes, queue: 'custom_now')
+        n.sms('Test Deliver Now').deliver_now
       end
 
       expect_any_instance_of(Voltron::SmsJob).to receive(:perform_now)

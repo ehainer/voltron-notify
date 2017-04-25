@@ -81,7 +81,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
   private
 
     def send_now
-      mail.deliver_now
+      mail.send(delivery_method)
       @response << ActionMailer::Base.deliveries.last
       after_deliver
     end
@@ -107,7 +107,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
     end
 
     def delivery_method
-      @delivery_method ||= :deliver_later
+      @delivery_method ||= (use_queue? ? :deliver_later : :deliver_now)
     end
 
     def default_options

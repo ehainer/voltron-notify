@@ -71,6 +71,7 @@ CONTENT
 
         def copy_views
           copy_file '../../../app/views/voltron/notification_mailer/notify.html.erb', Rails.root.join('app', 'views', 'voltron', 'notification_mailer', 'notify.html.erb')
+          copy_file '../../../app/views/voltron/notification_mailer/notify.text.erb', Rails.root.join('app', 'views', 'voltron', 'notification_mailer', 'notify.text.erb')
         end
 
         def copy_locales

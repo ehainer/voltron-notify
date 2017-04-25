@@ -22,7 +22,7 @@ Or install it yourself as:
 
     $ gem install voltron-notify
 
-Then run the following to create the voltron.rb initializer (if not exists already) and add the notify config:
+Then run the following to create the voltron.rb initializer and add the notify config:
 
     $ rails g voltron:notify:install
 
@@ -38,14 +38,15 @@ class User < ActiveRecord::Base
 end
 ```
 
-`notifyable` will create a notifications association on whatever model it is called on. The one optional argument should be a hash with default SMS/Email ActiveJob options. See "ActiveJob Integration" below for more info on how/when the default options will be used.
+`notifyable` will create a `notifications` association on whatever model it is called on. The one optional argument should be a hash with default SMS/Email ActiveJob options. See "ActiveJob Integration" below for more info on how/when the default options will be used.
 
 Defined default options should look like so:
 
 ```ruby
 class User < ActiveRecord::Base
 
-  notifyable { sms: { wait: 10.minutes, queue: 'sms' }, email: { wait_until: 10.minutes.from_now, queue: 'mailers' } }
+  notifyable sms: { wait: 10.minutes, queue: 'sms' },
+             email: { wait_until: 10.minutes.from_now, queue: 'mailers' }
 
 end
 ```
@@ -100,6 +101,14 @@ Optionally, you may pass a block to the `sms` or `email` methods that allows for
 end
 ```
 
+In the case of the methods `mailer`, `method`, `arguments`, and `template`, below is each's purpose and default values
+
+| Method    | Default                                                                                                                                                                        | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| mailer    | Voltron::NotificationMailer                                                                                                                                                    | Defines what mailer class should be used to handle the sending of email notifications. Can be defined as the actual class name or a string, even in the format '&lt;module&gt;/&lt;mailer&gt;'. It is eventually converted to a string anyways, converted to a valid format with [classify](https://apidock.com/rails/v4.2.7/String/classify) and then instantiated with [constantize](https://apidock.com/rails/String/constantize)                                                                                                                                                                                                                                                                               |
+| method    | :notify                                                                                                                                                                        | Specifies what method within the defined mailer should be called. Can be a string or symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| arguments | nil                                                                                                                                                                            | Accepts an unlimited number of arguments that will be passed directly through to your mailer method Can be anything you want, so long as +mailer+.+method+() will understand it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| template  | nil, but due to ActionMailer's default behavior, assuming +mailer+ and +method+ are not modified, it will look for `app/views/voltron/notification_mailer/notify.<format>.erb` | Overrides the default mailer template by parsing a single string argument into separate [template_path](http://guides.rubyonrails.org/action_mailer_basics.html#mailer-views) and [template_name](http://guides.rubyonrails.org/action_mailer_basics.html#mailer-views) arguments for the +mail+ method. Note that this argument should be the path relative to your applications `app/views` directory, and that it strips any file extensions. So, in the case of a view located at `app/views/my_mailer/sub_dir/special_template.html.erb` you can specify the path `my_mailer/sub_dir/special_template`. Depending on what format email you've chosen to send it will look for `special_template.<format>.erb` |
 Note that both SMS and Email notifications have validations on the :to/:from fields, the email subject, and the SMS body text. Since `notifications` is an association, any errors in the actual notification content will bubble up, possibly preventing the `notifyable` model from saving. For that reason, it may be more logical to instead use a @notifyable.notifications.build / @notifyable.save syntax to properly handle errors that may occur.
 
 
@@ -109,13 +118,23 @@ Voltron Notify supports sending both email (via deliver_later) and SMS (via Volt
 
 If the value of `Voltron.config.notify.use_queue` is `true`, additional methods for sending SMS/Email can be used to further control the ActiveJob params.
 
-For +email+, the methods `deliver_now`, `deliver_now!`, `deliver_later`, `deliver_later!` are exposed, and accept the same arguments (if any) as those defined in [ActionMailer::MessageDelivery](http://edgeapi.rubyonrails.org/classes/ActionMailer/MessageDelivery.html). All methods are pass-thru's to their equivalent found within ActionMailer (i.e. - same as `MyMailer.invite.deliver_*`)
+For the `email` method:
 
-For +sms+, the methods `deliver_now` and `deliver_later` are exposed, and accept the same arguments as those defined in [ActiveJob::Core::ClassMethods](https://apidock.com/rails/ActiveJob/Core/ClassMethods/set). Each method serves as a sort of pass-thru for ActiveJob's `perform_now` and `perform_later`, and functions essentially the same way.
+| Queue Specific Methods Available | Accepts Arguments?                                                                                                                                                                                                                                                                                                                                                                                   | Behavior                                                                                                                                                                                | Default Behavior If Not Manually Called                                 |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| deliver_now                      | No                                                                                                                                                                                                                                                                                                                                                                                                   | Same as [deliver_now](https://apidock.com/rails/v4.2.7/ActionMailer/MessageDelivery/deliver_now), except this will not occur until the parent notification association is saved         | Yes, if `Voltron.config.notify.use_queue` is *not* truthy. No otherwise |
+| deliver_now!                     | No                                                                                                                                                                                                                                                                                                                                                                                                   | Same as [deliver_now!](https://apidock.com/rails/ActionMailer/MessageDelivery/deliver_now%21), except this will not occur until the parent notification association is saved            | No                                                                      |
+| deliver_later                    | Yes, same as what [deliver_later](https://apidock.com/rails/v4.2.7/ActionMailer/MessageDelivery/deliver_later) would accept. These arguments will come from the defaults specified when `notifyable` is called in the model. Default arguments are always overridden by the same options defined in this methods arguments. See documentation of `notifyable` and it's accepted arguments above.     | Same as [deliver_later](https://apidock.com/rails/v4.2.7/ActionMailer/MessageDelivery/deliver_later), except this will not occur until the parent notification association is saved     | Yes, if `Voltron.config.notify.use_queue` is truthy. No otherwise       |
+| deliver_later!                   | Yes, same as what [deliver_later!](https://apidock.com/rails/v4.2.7/ActionMailer/MessageDelivery/deliver_later%21) would accept. These arguments will come from the defaults specified when `notifyable` is called in the model. Default arguments are always overridden by the same options defined in this methods arguments. See documentation of `notifyable` and it's accepted arguments above. | Same as [deliver_later!](https://apidock.com/rails/v4.2.7/ActionMailer/MessageDelivery/deliver_later%21), except this will not occur until the parent notification association is saved | No                                                                      |
 
-If not explicitly called, and `use_queue` is `true`, each notification method operates as if `deliver_later` was called with no arguments (or default arguments if specified, see documentation about `notifyable` above.) Note that any arguments passed to a method listed above will override the same options specified in the default options defined with `notifyable`
 
-If `use_queue` is `false`, the +email+ method behaves as if `deliver_now` was called on it, and +sms+ is delivered in a non-backgrounded, blocking way... immediately.
+For the `sms` method:
+
+| Queue Specific Methods Available | Accepts Arguments?                                                                                                                                                                                                                                                                                                                                                   | Behavior                                                                                                                                                            | Default Behavior If Not Manually Called                                 |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| deliver_now                      | No                                                                                                                                                                                                                                                                                                                                                                   | When associated notification object is saved, SMS will be sent immediately (via ActiveJob's [perform_now](https://apidock.com/rails/v4.2.1/ActiveJob/Execution/ClassMethods/perform_now)), in a blocking way, aka - rails will wait until SMS is sent before continuing execution. | Yes, if `Voltron.config.notify.use_queue` is *not* truthy. No otherwise |
+| deliver_later                    | Yes, same as what [set](https://apidock.com/rails/ActiveJob/Core/ClassMethods/set) would accept. These arguments will come from the defaults specified when `notifyable` is called in the model. Default arguments are always overridden by the same options defined in this methods arguments. See documentation of `notifyable` and it's accepted arguments above. | When associated notification object is saved, ActiveJob's [perform_later](https://apidock.com/rails/ActiveJob/Enqueuing/ClassMethods/perform_later) is called.                                                                                                                     | Yes, if `Voltron.config.notify.use_queue` is truthy. No otherwise       |
+
 
 Example usage:
 
@@ -123,7 +142,8 @@ Example usage:
 @user = User.find(1)
 
 @user.notifications.build do |n|
-  n.sms("Delayed Message").deliver_now(queue: 'sms') # Will call ActiveJob's +perform_now+
+  n.sms("Immediate Message").deliver_now # Will deliver the SMS as soon as the notification is saved
+  n.sms("Delayed Message").deliver_later(queue: 'sms', wait_until: 10.minutes.from_now) # Will deliver the SMS via +perform_now+ with ActiveJob
   n.email("Delayed Mail Subject", { param_one: "Hi there", param_two: "" }).deliver_later(wait: 5.minutes)
 end
 
@@ -145,16 +165,11 @@ end
 
 Without specifying, the default options for notification updates are as follows:
 
-```
-# The default url path that Twilio will POST updates to. Can be anything you want so long as it's a valid URL path
-path: '/notification/update'
-
-# The controller that will handle the notification update
-controller: 'voltron/notification'
-
-# The action that will perform the update
-action: 'update'
-```
+| Option     | Default              | Comment                                                                                                                   |
+|------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
+| path       | /notification/update | The default url path that Twilio will POST updates to. Can be anything you want so long as it's a valid URL path          |
+| controller | voltron/notification | The controller that will handle the notification update (in this case `app/controllers/voltron/notification_controller.rb`) |
+| action     | update               | The controller action (method) that will perform the update                                                               |
 
 If the value of `controller` or `action` are modified, it is assumed that whatever they point to will handle SMS notification updates. See the description column for "StatusCallback" parameter [here](https://www.twilio.com/docs/api/rest/sending-messages) for information on what Twilio will POST to the callback url. Or, take a look at this gems `app/controller/voltron/notification_controller.rb` file to see what it does by default.
 

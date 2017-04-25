@@ -36,9 +36,9 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     Voltron::Notification.format_output_of(response_json)
   end
 
-  # Establish that we will perform the job immediately, and set the options
-  def deliver_now(options={})
-    @job_options = options
+  # Establish that we will perform the job immediately. Will cause +send_now+ to be called instead when saved
+  def deliver_now
+    @job_options = {}
     @job_method = :perform_now
   end
 
