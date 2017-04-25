@@ -336,6 +336,7 @@ describe Voltron::Notify, type: :module do
     end
 
     it 'should accept options for enqueueing a job via deliver_now' do
+      skip 'Set the value of `phone` in the \'user\' factory to run this test' if user.phone.blank?
       Voltron.config.notify.use_queue = true
       user.notifications.build do |n|
         n.sms('Test Deliver Now').deliver_now
@@ -347,6 +348,7 @@ describe Voltron::Notify, type: :module do
     end
 
     it 'should accept options for enqueueing a job via deliver_later' do
+      skip 'Set the value of `phone` in the \'user\' factory to run this test' if user.phone.blank?
       Voltron.config.notify.use_queue = true
       user.notifications.build do |n|
         n.sms('Test On Specific Later Queue').deliver_later(wait: 10.minutes, queue: 'custom_later')
