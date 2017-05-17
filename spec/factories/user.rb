@@ -4,6 +4,6 @@ FactoryGirl.define do
 
     # Set this to a valid Twilio recipient number in order to allow SMS tests to run properly
     # If `blank?` all SMS sending tests will be skipped since they would fail otherwise
-    phone nil
+    phone '9705813387'
   end
 end

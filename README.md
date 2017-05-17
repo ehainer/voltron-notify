@@ -1,5 +1,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/ehainer/voltron-notify/badge.svg?branch=master)](https://coveralls.io/github/ehainer/voltron-notify?branch=master)
 [![Build Status](https://travis-ci.org/ehainer/voltron-notify.svg?branch=master)](https://travis-ci.org/ehainer/voltron-notify)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
 # Voltron::Notify
 
@@ -183,5 +184,5 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/ehaine
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
