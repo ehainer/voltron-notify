@@ -23,7 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rack', '>= 1.6'
   spec.add_dependency 'voltron', '~> 0.2', '>= 0.2.1'
 
-  spec.add_development_dependency 'simplecov', '~> 0.14.1'
   spec.add_development_dependency 'bundler', '~> 1.12'
   spec.add_development_dependency 'rake', '~> 11.3'
   spec.add_development_dependency 'rspec', '~> 3.0'
@@ -32,5 +31,4 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'factory_girl_rails', '~> 4.7'
   spec.add_development_dependency 'letter_opener', '~> 1.4'
   spec.add_development_dependency 'sidekiq', '~> 4.2.10'
-  spec.add_development_dependency 'coveralls', '~> 0.8.21'
 end
