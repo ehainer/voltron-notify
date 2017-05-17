@@ -1,4 +1,4 @@
-[![Code Climate](https://codeclimate.com/github/ehainer/voltron-notify.png)](https://codeclimate.com/github/ehainer/voltron-notify)
+[![Coverage Status](https://coveralls.io/repos/github/ehainer/voltron-notify/badge.svg?branch=master)](https://coveralls.io/github/ehainer/voltron-notify?branch=master)
 [![Build Status](https://travis-ci.org/ehainer/voltron-notify.svg?branch=master)](https://travis-ci.org/ehainer/voltron-notify)
 
 # Voltron::Notify
@@ -11,7 +11,7 @@ Voltron Notify is an attempt to join Twilio's SMS api with Rails' default mailer
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'voltron-notify'
+gem 'voltron-notify', '~> 0.2.0'
 ```
 
 And then execute:
@@ -74,8 +74,8 @@ While you may specify the :to and :from as one of the arguments, by default the 
 @user = User.find(1) #<User id: 1, phone: "1234567890", email: "info@example.com", created_at: "2016-09-23 16:49:20", updated_at: "2016-09-23 16:49:20">
 
 @user.notifications.create do |n|
-  n.sms "Hello from SMS" # Will send to +1 (123) 456-7890
-  n.email "Hello from Email" # Will send to info@example.com
+  n.sms 'Hello from SMS' # Will send to +1 (123) 456-7890
+  n.email 'Hello from Email' # Will send to info@example.com
 end
 
 # @user.notifications.build { |n| ... } ... followed by @user.save works the same way
@@ -85,18 +85,19 @@ Optionally, you may pass a block to the `sms` or `email` methods that allows for
 
 ```ruby
 @user.notifications.create do |n|
-  n.sms "Hello from SMS" do
-    attach "picture.jpg" # Attach an image using the rails asset pipeline by specifying just the filename
-    attach "http://www.someimagesite.com/example/demo/image.png" # Or just provide a url to a supported file beginning with "http"
+  n.sms 'Hello from SMS' do
+    attach 'picture.jpg' # Attach an image using the rails asset pipeline by specifying just the filename
+    attach 'http://www.someimagesite.com/example/demo/image.png' # Or just provide a url to a supported file beginning with 'http'
   end
 
-  n.email "Hello from Email" do
-    attach "picture.jpg" # Uses the asset pipeline like above
-    attach "http://www.example.com/picture.jpg" # This WILL NOT work, email attachments don't work that way
+  n.email 'Hello from Email' do
+    attach 'picture.jpg' # Uses the asset pipeline like above
+    attach 'http://www.example.com/picture.jpg' # This WILL NOT work, email attachments don't work that way
 
     mailer SiteMailer # Default: Voltron::NotificationMailer
     method :send_my_special_notification # Default: :notify
     arguments @any, list, of.arguments, :you, would, @like # In this case, the arguments used by SiteMailer.send_my_special_notification()
+    template 'my_mailer/sub_dir/custom_template' # Default: 'voltron/notification_mailer/notify.html.erb'
   end
 end
 ```
@@ -108,7 +109,7 @@ In the case of the methods `mailer`, `method`, `arguments`, and `template`, belo
 | mailer    | Voltron::NotificationMailer                                                                                                                                                    | Defines what mailer class should be used to handle the sending of email notifications. Can be defined as the actual class name or a string, even in the format '&lt;module&gt;/&lt;mailer&gt;'. It is eventually converted to a string anyways, converted to a valid format with [classify](https://apidock.com/rails/v4.2.7/String/classify) and then instantiated with [constantize](https://apidock.com/rails/String/constantize)                                                                                                                                                                                                                                                                               |
 | method    | :notify                                                                                                                                                                        | Specifies what method within the defined mailer should be called. Can be a string or symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | arguments | nil                                                                                                                                                                            | Accepts an unlimited number of arguments that will be passed directly through to your mailer method Can be anything you want, so long as +mailer+.+method+() will understand it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| template  | nil, but due to ActionMailer's default behavior, assuming +mailer+ and +method+ are not modified, it will look for `app/views/voltron/notification_mailer/notify.<format>.erb` | Overrides the default mailer template by parsing a single string argument into separate [template_path](http://guides.rubyonrails.org/action_mailer_basics.html#mailer-views) and [template_name](http://guides.rubyonrails.org/action_mailer_basics.html#mailer-views) arguments for the +mail+ method. Note that this argument should be the path relative to your applications `app/views` directory, and that it strips any file extensions. So, in the case of a view located at `app/views/my_mailer/sub_dir/special_template.html.erb` you can specify the path `my_mailer/sub_dir/special_template`. Depending on what format email you've chosen to send it will look for `special_template.<format>.erb` |
+| template  | nil, but due to ActionMailer's default behavior, assuming `mailer` and `method` are not modified, it will look for `app/views/voltron/notification_mailer/notify.<format>.erb` | Overrides the default mailer template by parsing a single string argument into separate [template_path](http://guides.rubyonrails.org/action_mailer_basics.html#mailer-views) and [template_name](http://guides.rubyonrails.org/action_mailer_basics.html#mailer-views) arguments for the `mail` method. Note that this argument should be the path relative to your applications `app/views` directory, and that it strips any file extensions. So, in the case of a view located at `app/views/my_mailer/sub_dir/special_template.html.erb` you can specify the path `my_mailer/sub_dir/special_template`. Depending on what format email you've chosen to send it will look for `special_template.<format>.erb` |
 
 Note that both SMS and Email notifications have validations on the :to/:from fields, the email subject, and the SMS body text. Since `notifications` is an association, any errors in the actual notification content will bubble up, possibly preventing the `notifyable` model from saving. For that reason, it may be more logical to instead use a @notifyable.notifications.build / @notifyable.save syntax to properly handle errors that may occur.
 
@@ -143,7 +144,7 @@ Example usage:
 @user.notifications.build do |n|
   n.sms("Immediate Message").deliver_now # Will deliver the SMS as soon as the notification is saved
   n.sms("Delayed Message").deliver_later(queue: 'sms', wait_until: 10.minutes.from_now) # Will deliver the SMS via +perform_now+ with ActiveJob
-  n.email("Delayed Mail Subject", { param_one: "Hi there", param_two: "" }).deliver_later(wait: 5.minutes)
+  n.email("Delayed Mail Subject", { param_one: "Hi there", param_two: "" }).deliver_later(wait: 5.minutes) # Will pass through to ActionMailer's +deliver_later+ method
 end
 
 @user.save # Will finally perform the actual actions defined. Basically, +deliver_*+ does nothing until the notification is saved.
@@ -172,14 +173,9 @@ Without specifying, the default options for notification updates are as follows:
 
 If the value of `controller` or `action` are modified, it is assumed that whatever they point to will handle SMS notification updates. See the description column for "StatusCallback" parameter [here](https://www.twilio.com/docs/api/rest/sending-messages) for information on what Twilio will POST to the callback url. Or, take a look at this gems `app/controller/voltron/notification_controller.rb` file to see what it does by default.
 
-In order for `allow_notification_update` to generate the correct callback url, please ensure the value of `Voltron.config.base_url` is a valid host name. By default it will attempt to obtain this information from the `:host` parameter of `Rails.application.config.action_controller.default_url_options` but if specified in the Voltron initializer that will 
+In order for `allow_notification_update` to generate the correct callback url, please ensure the value of `Voltron.config.base_url` is a valid host name. By default it will attempt to obtain this information from the `:host` parameter of `Rails.application.config.action_controller.default_url_options` but if specified in the Voltron initializer that will be used instead.
 
 Note that `allow_notification_update` does nothing if running on a host matching `/localhost|127\.0\.0\.1/i` Since Twilio can't reach locally running apps to POST to, the app will not even provide Twilio with the callback url to try it. If you have a local app host named Twilio will try and POST to it, but will obviously fail for the reasons previously stated. Basically, this feature only works on remotely accessible hosts.
-
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
 ## Contributing
 
