@@ -9,7 +9,7 @@ en:
       notifications/sms_notifications:
         to: Recipient
         from: Sender
-        message: SMS message
+        message: Message
         status: Status
       notifications/email_notifications:
         to: Recipient
