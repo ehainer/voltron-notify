@@ -95,9 +95,8 @@ CONTENT
 
           File.open(locale_path, 'w') do |f|
             f.puts '# This file will be merged with various other Voltron related YAML files with priority'
-            f.puts '# given to what exists in this file to begin with (nothing you add/modify here will be overwritten)'
-            f.puts '# whenever you run `rails g voltron:<gem_name>:install`,'
-            f.puts '# only if the gem in question has any locale data associated with it'
+            f.puts '# given to what exists in this file to begin with (meaning: nothing you add/modify here will be overwritten)'
+            f.puts '# whenever you run `rails g voltron:<gem_name>:install`'
             f.puts
             f.puts notification_locale.stringify_keys.to_yaml(line_width: -1)
           end

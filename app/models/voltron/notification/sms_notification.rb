@@ -6,7 +6,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
   has_many :attachments
 
-  belongs_to :notification
+  belongs_to :notification, inverse_of: :sms_notifications
 
   after_initialize :setup
 
@@ -62,7 +62,7 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
     begin
       to_formatted
       true
-    rescue => e
+    rescue ::Twilio::REST::RequestError => e
       Voltron.log e.message, 'Notify', Voltron::Notify::LOG_COLOR
       false
     end
@@ -156,8 +156,8 @@ class Voltron::Notification::SmsNotification < ActiveRecord::Base
 
     def format(input)
       # Try to format the number via Twilio's api
-      # raises an exception if the input was invalid
-      number = lookup.phone_numbers.get input
+      raise ::Twilio::REST::RequestError.new('Phone number cannot be blank') if input.blank?
+      number = lookup.phone_numbers.get input.to_s
       number.phone_number
     end
 

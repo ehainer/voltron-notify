@@ -1,20 +1,19 @@
 # This file will be merged with various other Voltron related YAML files with priority
-# given to what exists in this file to begin with (nothing you add/modify here will be overwritten)
-# whenever you run `rails g voltron:<gem_name>:install`,
-# only if the gem in question has any locale data associated with it
+# given to what exists in this file to begin with (meaning: nothing you add/modify here will be overwritten)
+# whenever you run `rails g voltron:<gem_name>:install`
 
 ---
 en:
   activerecord:
     attributes:
-      voltron/notification/email_notification:
-        to: Recipient
-        subject: Subject
-      voltron/notification/sms_notification:
+      notifications/sms_notifications:
         to: Recipient
         from: Sender
-        message: Message
+        message: SMS message
         status: Status
+      notifications/email_notifications:
+        to: Recipient
+        subject: Subject
   voltron:
     notification:
       email:

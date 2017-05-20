@@ -1,24 +1,22 @@
 module Voltron
   class Notification < ActiveRecord::Base
 
-    belongs_to :notifyable, polymorphic: true
+    belongs_to :notifyable, polymorphic: true, inverse_of: :notifications
 
-    has_many :sms_notifications
+    has_many :sms_notifications, inverse_of: :notification, validate: true, autosave: true
 
-    has_many :email_notifications
+    has_many :email_notifications, inverse_of: :notification, validate: true, autosave: true
 
     before_validation :prepare
 
-    before_validation :validate
-
     PERMITTED_ATTRIBUTES = [:to, :from]
 
-    def email(subject, **args, &block)
+    def email(subject, options={}, &block)
       # Get the remaining args as params, that will eventually become assigns in the mailer template
-      params = { subject: subject, notifyable.class.name.downcase => notifyable }.compact.merge(**args)
+      params = { subject: subject, notifyable.class.name.downcase => notifyable }.compact.merge(options)
 
       # Build the options hash from the provided arguments
-      options = { subject: subject }.merge(**args.select { |k, _| PERMITTED_ATTRIBUTES.include?(k.to_sym) })
+      options = { subject: subject }.merge(options.select { |k, _| PERMITTED_ATTRIBUTES.include?(k.to_sym) })
 
       # Build a new SMS notification object
       notification_email = email_notifications.build(options)
@@ -33,9 +31,9 @@ module Voltron
       notification_email
     end
 
-    def sms(message, **args, &block)
+    def sms(message, options={}, &block)
       # Build the options hash from the provided arguments
-      options = { message: message, from: Voltron.config.notify.sms_from }.merge(**args)
+      options = { message: message, from: Voltron.config.notify.sms_from }.merge(options)
 
       # Build a new SMS notification object
       notification_sms = sms_notifications.build(options)
@@ -63,15 +61,6 @@ module Voltron
     end
 
     private
-
-      def validate
-        # Add SMS/Email related errors to self
-        (sms_notifications.to_a + email_notifications.to_a).each do |n|
-          unless n.valid?
-            n.errors.full_messages.each { |msg| self.errors.add(:base, msg) }
-          end
-        end
-      end
 
       def prepare
         # Set the to value for both the email and phone, if any on this model

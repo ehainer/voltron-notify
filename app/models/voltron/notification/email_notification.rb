@@ -1,6 +1,6 @@
 class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
-  belongs_to :notification
+  belongs_to :notification, inverse_of: :email_notifications
 
   after_initialize :setup
 
