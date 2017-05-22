@@ -4,7 +4,8 @@
 
 # Voltron::Notify
 
-Voltron Notify is an attempt to join Twilio's SMS api with Rails' default mailer functionality into one single method.
+Trying to make the task of sending both email and SMS notifications as easy as possible, while also providing a simple(ish) way of tracking each notification sent.
+
 
 
 ## Installation
@@ -12,12 +13,12 @@ Voltron Notify is an attempt to join Twilio's SMS api with Rails' default mailer
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'voltron-notify', '~> 0.2.0'
+gem 'voltron-notify', '~> 0.2.1'
 ```
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
 Or install it yourself as:
 
@@ -41,7 +42,7 @@ end
 
 `notifyable` will create a `notifications` association on whatever model it is called on. The one optional argument should be a hash with default SMS/Email ActiveJob options. See "ActiveJob Integration" below for more info on how/when the default options will be used.
 
-Defined default options should look like so:
+Defined default options should (or rather, could) look like so:
 
 ```ruby
 class User < ActiveRecord::Base
@@ -59,20 +60,20 @@ Once done, you can utilize Voltron Notify like so:
 
 @user.notifications.create do |n|
   # First argument is SMS message text, second argument is hash containing zero or more of: [:to, :from]
-  n.sms "This is my message", to: "1 (234) 567-8910"
+  n.sms 'This is my message', to: '1 (234) 567-8910'
 
   # and/or ...
 
   # First argument is email subject, remaining arguments can consist of [:to, :from] or any other param you'd like,
   # they will all be converted to @variables for use in the mailer template
-  n.email "This is the mail subject", { to: "info@example.com", param_one: "Hi there", param_two: "" }
+  n.email 'This is the mail subject', { to: 'info@example.com', param_one: 'Hi there', param_two: '' }
 end
 ```
 
 While you may specify the :to and :from as one of the arguments, by default the :from value of each notification type comes from `Voltron.config.notify.email_from` and `Voltron.config.notify.sms_from`. The value of :to by default will attempt to be retrieved by calling `.phone` or `.email` on the notifyable model itself. So given a User model with attributes (or methods) `email` and `phone`, the following will send notifications to those values:
 
 ```ruby
-@user = User.find(1) #<User id: 1, phone: "1234567890", email: "info@example.com", created_at: "2016-09-23 16:49:20", updated_at: "2016-09-23 16:49:20">
+@user = User.find(1) #<User id: 1, phone: '1234567890', email: 'info@example.com', created_at: '2016-09-23 16:49:20', updated_at: '2016-09-23 16:49:20'>
 
 @user.notifications.create do |n|
   n.sms 'Hello from SMS' # Will send to +1 (123) 456-7890
@@ -114,9 +115,11 @@ In the case of the methods `mailer`, `method`, `arguments`, and `template`, belo
 
 Note that both SMS and Email notifications have validations on the :to/:from fields, the email subject, and the SMS body text. Since `notifications` is an association, any errors in the actual notification content will bubble up, possibly preventing the `notifyable` model from saving. For that reason, it may be more logical to instead use a @notifyable.notifications.build / @notifyable.save syntax to properly handle errors that may occur.
 
+
+
 ## ActiveJob Integration
 
-Voltron Notify supports sending both email (via deliver_later) and SMS (via Voltron::SmsJob and perform_later). To have all notifications be handled by ActiveJob in conjunction with Sidekiq/Resque/whatever you need only set the config value `Voltron.config.notify.use_queue` to `true`. If ActiveJob is configured properly notifications will send that way instead. You may also optionally set the delay for each notification by setting the value of `Voltron.config.notify.delay` to any time value (i.e. 5.minutes, 3.months, 0.seconds)
+Voltron Notify supports sending both email (via deliver_later) and SMS (via Voltron::SmsJob and perform_later). To have all notifications be handled by ActiveJob in conjunction with Sidekiq/Resque/whatever you need only set the config value `Voltron.config.notify.use_queue` to `true`. If ActiveJob is configured properly notifications will send that way instead.
 
 If the value of `Voltron.config.notify.use_queue` is `true`, additional methods for sending SMS/Email can be used to further control the ActiveJob params.
 
@@ -143,9 +146,9 @@ Example usage:
 @user = User.find(1)
 
 @user.notifications.build do |n|
-  n.sms("Immediate Message").deliver_now # Will deliver the SMS as soon as the notification is saved
-  n.sms("Delayed Message").deliver_later(queue: 'sms', wait_until: 10.minutes.from_now) # Will deliver the SMS via +perform_now+ with ActiveJob
-  n.email("Delayed Mail Subject", { param_one: "Hi there", param_two: "" }).deliver_later(wait: 5.minutes) # Will pass through to ActionMailer's +deliver_later+ method
+  n.sms('Immediate Message').deliver_now # Will deliver the SMS as soon as the notification is saved
+  n.sms('Delayed Message').deliver_later(queue: 'sms', wait_until: 10.minutes.from_now) # Will deliver the SMS via +perform_now+ with ActiveJob
+  n.email('Delayed Mail Subject', { param_one: 'Hi there', param_two: '' }).deliver_later(wait: 5.minutes) # Will pass through to ActionMailer's +deliver_later+ method
 end
 
 @user.save # Will finally perform the actual actions defined. Basically, +deliver_*+ does nothing until the notification is saved.
@@ -159,28 +162,38 @@ Also supported are Twilio status update callbacks for SMS notifications. To enab
 ```ruby
 Rails.application.routes.draw do
 
-  allow_notification_update(options={})
+  allow_notification_update [options]
 
 end
 ```
 
-Without specifying, the default options for notification updates are as follows:
+Without specifying, the default options hash for notification updates are as follows:
 
-| Option     | Default              | Comment                                                                                                                   |
-|------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
-| path       | /notification/update | The default url path that Twilio will POST updates to. Can be anything you want so long as it's a valid URL path          |
-| controller | voltron/notification | The controller that will handle the notification update (in this case `app/controllers/voltron/notification_controller.rb`) |
-| action     | update               | The controller action (method) that will perform the update                                                               |
+| Option (hash key)     | Default (hash value)             | Comment                                                                                                                   |
+|-----------------------|----------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| path                  | /notification/update             | The default url path that Twilio will POST updates to. Can be anything you want so long as it's a valid URL path          |
+| controller            | voltron/notification             | The controller that will handle the notification update (in this case `app/controllers/voltron/notification_controller.rb`) |
+| action                | update                           | The controller action (method) that will perform the update                                                               |
 
 If the value of `controller` or `action` are modified, it is assumed that whatever they point to will handle SMS notification updates. See the description column for "StatusCallback" parameter [here](https://www.twilio.com/docs/api/rest/sending-messages) for information on what Twilio will POST to the callback url. Or, take a look at this gems `app/controller/voltron/notification_controller.rb` file to see what it does by default.
 
 In order for `allow_notification_update` to generate the correct callback url, please ensure the value of `Voltron.config.base_url` is a valid host name. By default it will attempt to obtain this information from the `:host` parameter of `Rails.application.config.action_controller.default_url_options` but if specified in the Voltron initializer that will be used instead.
 
-Note that `allow_notification_update` does nothing if running on a host matching `/localhost|127\.0\.0\.1/i` Since Twilio can't reach locally running apps to POST to, the app will not even provide Twilio with the callback url to try it. If you have a local app host named Twilio will try and POST to it, but will obviously fail for the reasons previously stated. Basically, this feature only works on remotely accessible hosts.
+Note that `allow_notification_update` does nothing if running on a host matching `localhost` or `127.0.0.1` Since Twilio can't reach locally running apps to POST to, the app will not even provide Twilio with the callback url to try it. If you have a local app host named Twilio will try and POST to it, but will obviously fail for the reasons previously stated. Basically, this feature only works on remotely accessible hosts.
+
+
+
+## Translation
+
+When the install generator is run (see Installation), notification specific translations will appear in the Voltron translation file, `app/config/locales/voltron.yml`. If this file exists already the notification specific translations will be merged in as needed, without overwriting anything that might already be defined. All translations should be self explanatory, just modify as you see fit.
+
+
 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/ehainer/voltron-notify. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+
+
 
 ## License
 
