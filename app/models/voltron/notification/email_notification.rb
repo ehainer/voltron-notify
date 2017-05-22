@@ -54,7 +54,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
 
   def template(fullpath)
     parts = fullpath.split('/')
-    self.template_name = parts.pop.sub(/\.(html|text)\..*$/, '')
+    self.template_name = parts.pop.sub(/\.[a-z_]+\.[^\.]+$/i, '')
     self.template_path = parts.join('/')
   end
 
@@ -99,7 +99,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
       @mailer_arguments = nil
       self.mailer_class ||= Voltron.config.notify.default_mailer
       self.mailer_method ||= Voltron.config.notify.default_method
-      template(Voltron.config.notify.default_template)
+      template(Voltron.config.notify.default_template) if self.template_name.blank? || self.template_path.blank?
     end
 
     def mail_options

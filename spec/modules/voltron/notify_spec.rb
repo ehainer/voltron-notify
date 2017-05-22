@@ -331,8 +331,8 @@ describe Voltron::Notify, type: :module do
 
       Voltron::SmsJob.perform_now(user.notifications.last.sms_notifications.last)
 
-      expect(last_sms_notification.request.last).to have_key(:StatusCallback)
-      expect(last_sms_notification.sid).to_not be_nil
+      expect(user.notifications.last.sms_notifications.last.request.last).to have_key(:StatusCallback)
+      expect(user.notifications.last.sms_notifications.last.sid).to_not be_nil
     end
 
     it 'should accept options for enqueueing a job via deliver_now' do
