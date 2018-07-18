@@ -34,7 +34,7 @@ class Voltron::Notification::EmailNotification < ActiveRecord::Base
       path = file.path
       file.close
     elsif !File.exist?(path)
-      path = Voltron.asset.find(path)
+      path = Voltron.asset.find(path) || path
     end
 
     attachments[name] = path
